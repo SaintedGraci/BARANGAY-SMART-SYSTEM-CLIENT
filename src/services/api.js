@@ -77,7 +77,9 @@ api.interceptors.response.use(
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Preserve admin login path
+        const isAdminPath = window.location.pathname.includes('/admin');
+        window.location.href = isAdminPath ? '/admin/login' : '/login';
         return Promise.reject(error);
       }
 
@@ -112,7 +114,9 @@ api.interceptors.response.use(
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Preserve admin login path
+        const isAdminPath = window.location.pathname.includes('/admin');
+        window.location.href = isAdminPath ? '/admin/login' : '/login';
         
         return Promise.reject(refreshError);
       }
@@ -123,7 +127,9 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Preserve admin login path
+      const isAdminPath = window.location.pathname.includes('/admin');
+      window.location.href = isAdminPath ? '/admin/login' : '/login';
     }
 
     return Promise.reject(error);

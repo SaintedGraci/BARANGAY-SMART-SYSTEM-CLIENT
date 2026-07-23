@@ -273,6 +273,32 @@ function ResidentStatusBadge({ isVerified }) {
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // RBAC: Define role permissions
+  const rolePermissions = {
+    captain: ['overview', 'residents', 'requests', 'complaints', 'announcements', 'reports'],
+    secretary: ['overview', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'reports'],
+    staff: ['overview', 'residents', 'requests', 'complaints', 'verifications'],
+    admin: ['overview', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'reports', 'logs']
+  };
+  
+  // Get user's allowed tabs based on role
+  const userRole = user?.role || 'staff';
+  const allowedTabs = rolePermissions[userRole] || rolePermissions.staff;
+  
+  // Check if user has permission for a specific tab
+  const hasPermission = (tab) => allowedTabs.includes(tab);
+  
+  // Safe tab setter - only allows changing to authorized tabs
+  const changeTab = (tab) => {
+    if (hasPermission(tab)) {
+      setActiveTab(tab);
+    } else {
+      // Redirect to overview if trying to access unauthorized tab
+      setActiveTab('overview');
+    }
+  };
+  
   const [requests, setRequests] = useState([]);
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -312,6 +338,15 @@ export default function AdminDashboard() {
   });
   const [pendingVerifications, setPendingVerifications] = useState([]);
   const [selectedVerification, setSelectedVerification] = useState(null);
+  const [blurredDocuments, setBlurredDocuments] = useState({
+    validId: true,
+    proofOfResidency: true
+  });
+  const [blurredInlineDocuments, setBlurredInlineDocuments] = useState({});
+  const [blurredResidentDocs, setBlurredResidentDocs] = useState({
+    validId: true,
+    proofOfResidency: true
+  });
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [documentToView, setDocumentToView] = useState(null);
   const [loadingVerifications, setLoadingVerifications] = useState(false);
@@ -330,6 +365,13 @@ export default function AdminDashboard() {
   const [complaintFilter, setComplaintFilter] = useState('all');
   const [complaintSearch, setComplaintSearch] = useState('');
   const [updatingComplaint, setUpdatingComplaint] = useState(false);
+
+  // RBAC: Check if current tab is authorized, redirect if not
+  useEffect(() => {
+    if (!hasPermission(activeTab)) {
+      setActiveTab('overview');
+    }
+  }, [activeTab, userRole]);
 
   useEffect(() => {
     fetchData();
@@ -690,13 +732,15 @@ export default function AdminDashboard() {
 
   const filteredResidents = Array.isArray(residents)
     ? residents.filter((resident) => {
+        // Only show verified residents in Residents tab
+        const isVerified = resident.User?.isVerified === true;
         const matchesSearch =
           residentSearchQuery === '' ||
           resident.firstName?.toLowerCase().includes(residentSearchQuery.toLowerCase()) ||
           resident.lastName?.toLowerCase().includes(residentSearchQuery.toLowerCase()) ||
           resident.User?.email?.toLowerCase().includes(residentSearchQuery.toLowerCase()) ||
           resident.contactNumber?.includes(residentSearchQuery);
-        return matchesSearch;
+        return isVerified && matchesSearch;
       })
     : [];
 
@@ -713,7 +757,7 @@ export default function AdminDashboard() {
     ? residents.filter((resident) => resident.User?.isVerified).length
     : 0;
 
-  const menuItems = [
+  const allMenuItems = [
     { id: 'overview', name: 'Overview', icon: LayoutDashboard },
     { id: 'requests', name: 'All Requests', icon: FileText },
     { id: 'complaints', name: 'Complaints', icon: AlertCircle, badge: complaints.filter(c => c.status === 'Pending').length },
@@ -728,6 +772,9 @@ export default function AdminDashboard() {
     { id: 'logs', name: 'System Logs', icon: Activity },
     { id: 'reports', name: 'Reports', icon: BarChart3 },
   ];
+  
+  // Filter menu items based on user role permissions
+  const menuItems = allMenuItems.filter(item => hasPermission(item.id));
 
   const activeMenuItem = menuItems.find((item) => item.id === activeTab);
   const lastUpdated = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -782,14 +829,14 @@ export default function AdminDashboard() {
       title: 'Manage Requests',
       description: 'Review statuses and release approved documents.',
       icon: FileCheck,
-      onClick: () => setActiveTab('requests'),
+      onClick: () => changeTab('requests'),
       className: 'bg-blue-600 text-white hover:bg-blue-700',
     },
     {
       title: 'Review Verifications',
       description: 'Approve or reject resident registrations.',
       icon: ShieldCheck,
-      onClick: () => setActiveTab('verifications'),
+      onClick: () => changeTab('verifications'),
       className: 'bg-white text-slate-900 hover:bg-slate-50 border border-slate-200',
     },
     {
@@ -862,7 +909,7 @@ export default function AdminDashboard() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => changeTab(item.id)}
                 className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/10'
@@ -917,9 +964,22 @@ export default function AdminDashboard() {
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95">
           <div className="flex flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
-                <LayoutDashboard className="h-4 w-4" />
-                Admin Console
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Admin Console
+                </div>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  userRole === 'admin' ? 'bg-purple-100 text-purple-700' :
+                  userRole === 'captain' ? 'bg-blue-100 text-blue-700' :
+                  userRole === 'secretary' ? 'bg-green-100 text-green-700' :
+                  'bg-slate-100 text-slate-700'
+                }`}>
+                  {userRole === 'admin' ? '🔧 System Admin' :
+                   userRole === 'captain' ? '🏛️ Captain' :
+                   userRole === 'secretary' ? '📋 Secretary' :
+                   '👥 Staff'}
+                </span>
               </div>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 {activeMenuItem?.name || 'Dashboard'}
@@ -960,20 +1020,24 @@ export default function AdminDashboard() {
                       Track document requests, verify residents, publish announcements, and monitor system activity from one organized workspace.
                     </p>
                     <div className="mt-6 flex flex-wrap gap-3">
-                      <button
-                        onClick={() => setActiveTab('requests')}
-                        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700"
-                      >
-                        <FileText className="h-4 w-4" />
-                        Manage Requests
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('verifications')}
-                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                      >
-                        <ShieldCheck className="h-4 w-4" />
-                        Review Verifications
-                      </button>
+                      {hasPermission('requests') && (
+                        <button
+                          onClick={() => changeTab('requests')}
+                          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Manage Requests
+                        </button>
+                      )}
+                      {hasPermission('verifications') && (
+                        <button
+                          onClick={() => changeTab('verifications')}
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          Review Verifications
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -1021,13 +1085,15 @@ export default function AdminDashboard() {
                       <h3 className="text-lg font-bold text-slate-950">Recent Requests</h3>
                       <p className="mt-1 text-sm text-slate-500">Latest document requests from residents</p>
                     </div>
-                    <button
-                      onClick={() => setActiveTab('requests')}
-                      className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800"
-                    >
-                      View all
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    {hasPermission('requests') && (
+                      <button
+                        onClick={() => changeTab('requests')}
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                      >
+                        View all
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[760px]">
@@ -1478,64 +1544,206 @@ export default function AdminDashboard() {
                   }
                 />
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {pendingVerifications.map((resident) => (
-                    <div key={resident.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-sm font-bold text-amber-700">
-                              {residentInitials(resident)}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className="truncate text-lg font-bold text-slate-950">{residentName(resident)}</h4>
-                              <p className="text-sm text-slate-500">@{resident.User?.username} • {resident.User?.email}</p>
-                            </div>
+                    <div key={resident.id} className="rounded-2xl border border-amber-200 bg-gradient-to-br from-white to-amber-50/30 p-6 shadow-sm">
+                      {/* Header */}
+                      <div className="flex items-start justify-between border-b border-amber-100 pb-5">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-lg font-bold text-white shadow-lg shadow-amber-900/20">
+                            {residentInitials(resident)}
                           </div>
+                          <div>
+                            <h4 className="text-xl font-bold text-slate-950">{residentName(resident)}</h4>
+                            <p className="mt-1 text-sm text-slate-600">@{resident.User?.username}</p>
+                            <p className="mt-0.5 text-sm text-slate-500">{resident.User?.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+                            <Clock className="h-3.5 w-3.5" />
+                            PENDING REVIEW
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {formatDate(resident.createdAt)}
+                          </span>
+                        </div>
+                      </div>
 
-                          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                            {[
-                              { label: 'Birth Date', value: formatDate(resident.birthDate) },
-                              { label: 'Contact', value: resident.contactNumber || 'N/A' },
-                              { label: 'Purok', value: resident.purok || 'N/A' },
-                              { label: 'Registered', value: formatDate(resident.createdAt) },
-                            ].map((item) => (
-                              <div key={item.label} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
-                                <p className="mt-1 text-sm font-bold text-slate-950">{item.value}</p>
+                      {/* Personal Info Grid */}
+                      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {[
+                          { label: 'Birth Date', value: formatDate(resident.birthDate), icon: CalendarDays },
+                          { label: 'Contact', value: resident.contactNumber || 'N/A', icon: Phone },
+                          { label: 'Purok', value: resident.purok || 'N/A', icon: MapPin },
+                          { label: 'Gender', value: resident.gender || 'N/A', icon: Users },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="flex items-center gap-2 text-slate-400">
+                              <item.icon className="h-4 w-4" />
+                              <p className="text-xs font-semibold uppercase tracking-wide">{item.label}</p>
+                            </div>
+                            <p className="mt-2 text-sm font-bold text-slate-950">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-center gap-2 text-slate-400">
+                          <MapPin className="h-4 w-4" />
+                          <p className="text-xs font-semibold uppercase tracking-wide">Full Address</p>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-slate-700">{fullAddress(resident)}</p>
+                      </div>
+
+                      {/* Documents Section */}
+                      <div className="mt-6">
+                        <h5 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-700">
+                          <FileCheck className="h-5 w-5 text-blue-600" />
+                          Verification Documents
+                        </h5>
+                        
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          {/* Valid ID */}
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="mb-3 flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-bold text-slate-950">Valid ID</p>
+                                <p className="mt-0.5 text-xs text-slate-500">Government-issued identification</p>
                               </div>
-                            ))}
+                              {resident.validIdPath && (
+                                <a
+                                  href={`http://localhost:5000${resident.validIdPath}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                  Open
+                                </a>
+                              )}
+                            </div>
+                            
+                            {resident.validIdPath ? (
+                              <div className="relative overflow-hidden rounded-lg border border-slate-200">
+                                <img
+                                  src={`http://localhost:5000${resident.validIdPath}`}
+                                  alt="Valid ID"
+                                  className={`h-56 w-full object-contain bg-slate-50 transition-all duration-300 ${
+                                    blurredInlineDocuments[`${resident.id}-validId`] !== false ? 'blur-xl' : 'blur-none'
+                                  }`}
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextElementSibling.style.display = 'flex';
+                                  }}
+                                />
+                                {blurredInlineDocuments[`${resident.id}-validId`] !== false && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
+                                    <button
+                                      onClick={() => setBlurredInlineDocuments(prev => ({ ...prev, [`${resident.id}-validId`]: false }))}
+                                      className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      Click to View
+                                    </button>
+                                  </div>
+                                )}
+                                <div className="hidden h-56 w-full items-center justify-center bg-slate-50">
+                                  <div className="text-center">
+                                    <AlertCircle className="mx-auto h-8 w-8 text-red-400" />
+                                    <p className="mt-2 text-sm text-slate-500">Failed to load image</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex h-56 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
+                                <div className="text-center">
+                                  <FileCheck className="mx-auto h-8 w-8 text-slate-300" />
+                                  <p className="mt-2 text-sm font-medium text-slate-500">No document uploaded</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
-                          <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Address</p>
-                            <p className="mt-1 text-sm font-medium text-slate-700">{fullAddress(resident)}</p>
+                          {/* Proof of Residency */}
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="mb-3 flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-bold text-slate-950">Proof of Residency</p>
+                                <p className="mt-0.5 text-xs text-slate-500">Barangay clearance or utility bill</p>
+                              </div>
+                              {resident.proofOfResidencyPath && (
+                                <a
+                                  href={`http://localhost:5000${resident.proofOfResidencyPath}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                  Open
+                                </a>
+                              )}
+                            </div>
+                            
+                            {resident.proofOfResidencyPath ? (
+                              <div className="relative overflow-hidden rounded-lg border border-slate-200">
+                                <img
+                                  src={`http://localhost:5000${resident.proofOfResidencyPath}`}
+                                  alt="Proof of Residency"
+                                  className={`h-56 w-full object-contain bg-slate-50 transition-all duration-300 ${
+                                    blurredInlineDocuments[`${resident.id}-proofOfResidency`] !== false ? 'blur-xl' : 'blur-none'
+                                  }`}
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextElementSibling.style.display = 'flex';
+                                  }}
+                                />
+                                {blurredInlineDocuments[`${resident.id}-proofOfResidency`] !== false && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
+                                    <button
+                                      onClick={() => setBlurredInlineDocuments(prev => ({ ...prev, [`${resident.id}-proofOfResidency`]: false }))}
+                                      className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      Click to View
+                                    </button>
+                                  </div>
+                                )}
+                                <div className="hidden h-56 w-full items-center justify-center bg-slate-50">
+                                  <div className="text-center">
+                                    <AlertCircle className="mx-auto h-8 w-8 text-red-400" />
+                                    <p className="mt-2 text-sm text-slate-500">Failed to load image</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex h-56 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
+                                <div className="text-center">
+                                  <FileCheck className="mx-auto h-8 w-8 text-slate-300" />
+                                  <p className="mt-2 text-sm font-medium text-slate-500">No document uploaded</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
+                      </div>
 
-                        <div className="grid gap-2 sm:grid-cols-2 lg:w-64">
-                          <button
-                            onClick={() => setSelectedVerification(resident)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                          >
-                            <Eye className="h-4 w-4" />
-                            View Documents
-                          </button>
-                          <button
-                            onClick={() => handleApproveResident(resident.id)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectResident(resident.id)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 sm:col-span-2"
-                          >
-                            <X className="h-4 w-4" />
-                            Reject
-                          </button>
-                        </div>
+                      {/* Action Buttons */}
+                      <div className="mt-6 flex gap-3 border-t border-amber-100 pt-5">
+                        <button
+                          onClick={() => handleApproveResident(resident.id)}
+                          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700"
+                        >
+                          <CheckCircle2 className="h-5 w-5" />
+                          Approve Registration
+                        </button>
+                        <button
+                          onClick={() => handleRejectResident(resident.id)}
+                          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-rose-300 bg-rose-50 px-6 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
+                        >
+                          <X className="h-5 w-5" />
+                          Reject Registration
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -2128,7 +2336,10 @@ export default function AdminDashboard() {
 
       <Modal
         isOpen={!!selectedResident}
-        onClose={() => setSelectedResident(null)}
+        onClose={() => {
+          setSelectedResident(null);
+          setBlurredResidentDocs({ validId: true, proofOfResidency: true });
+        }}
         title="Resident Details"
         subtitle={selectedResident ? `Resident ID: #${selectedResident.id}` : ''}
         icon={Users}
@@ -2213,10 +2424,140 @@ export default function AdminDashboard() {
               </div>
             </section>
 
+            {(selectedResident.validIdPath || selectedResident.proofOfResidencyPath) && (
+              <section>
+                <h4 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">
+                  <FileCheck className="h-4 w-4 text-blue-700" />
+                  Verification Documents
+                </h4>
+                <div className="space-y-4">
+                  {selectedResident.validIdPath && (
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Valid ID</p>
+                          <p className="mt-0.5 text-xs text-slate-500">Government-issued identification</p>
+                        </div>
+                        <a
+                          href={`http://localhost:5000${selectedResident.validIdPath}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Open Full Size
+                        </a>
+                      </div>
+                      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <img
+                          src={`http://localhost:5000${selectedResident.validIdPath}`}
+                          alt="Valid ID"
+                          className={`h-64 w-full object-contain transition-all duration-300 ${
+                            blurredResidentDocs.validId ? 'blur-xl' : 'blur-none'
+                          }`}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }}
+                        />
+                        {blurredResidentDocs.validId && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
+                            <button
+                              onClick={() => setBlurredResidentDocs(prev => ({ ...prev, validId: false }))}
+                              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Click to View
+                            </button>
+                          </div>
+                        )}
+                        <div className="hidden h-64 w-full items-center justify-center bg-slate-50 text-sm text-slate-500">
+                          Failed to load image
+                        </div>
+                      </div>
+                      {!blurredResidentDocs.validId && (
+                        <button
+                          onClick={() => setBlurredResidentDocs(prev => ({ ...prev, validId: true }))}
+                          className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          Hide Document
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  
+                  {selectedResident.proofOfResidencyPath && (
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Proof of Residency</p>
+                          <p className="mt-0.5 text-xs text-slate-500">Barangay clearance or utility bill</p>
+                        </div>
+                        <a
+                          href={`http://localhost:5000${selectedResident.proofOfResidencyPath}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Open Full Size
+                        </a>
+                      </div>
+                      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <img
+                          src={`http://localhost:5000${selectedResident.proofOfResidencyPath}`}
+                          alt="Proof of Residency"
+                          className={`h-64 w-full object-contain transition-all duration-300 ${
+                            blurredResidentDocs.proofOfResidency ? 'blur-xl' : 'blur-none'
+                          }`}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }}
+                        />
+                        {blurredResidentDocs.proofOfResidency && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
+                            <button
+                              onClick={() => setBlurredResidentDocs(prev => ({ ...prev, proofOfResidency: false }))}
+                              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Click to View
+                            </button>
+                          </div>
+                        )}
+                        <div className="hidden h-64 w-full items-center justify-center bg-slate-50 text-sm text-slate-500">
+                          Failed to load image
+                        </div>
+                      </div>
+                      {!blurredResidentDocs.proofOfResidency && (
+                        <button
+                          onClick={() => setBlurredResidentDocs(prev => ({ ...prev, proofOfResidency: true }))}
+                          className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          Hide Document
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  
+                  {!selectedResident.validIdPath && !selectedResident.proofOfResidencyPath && (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center">
+                      <FileCheck className="mx-auto h-12 w-12 text-slate-300" />
+                      <p className="mt-3 text-sm font-medium text-slate-500">No documents uploaded</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
             <div className="flex gap-3 border-t border-slate-100 pt-4">
               <button
                 type="button"
-                onClick={() => setSelectedResident(null)}
+                onClick={() => {
+                  setSelectedResident(null);
+                  setBlurredResidentDocs({ validId: true, proofOfResidency: true });
+                }}
                 className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Close
@@ -2360,17 +2701,42 @@ export default function AdminDashboard() {
                   </div>
                   {selectedVerification.validIdPath ? (
                     <>
-                      <img
-                        src={`http://localhost:5000/${selectedVerification.validIdPath}`}
-                        alt="Valid ID"
-                        className="mb-3 h-48 w-full rounded-xl object-cover"
-                      />
-                      <button
-                        onClick={() => handleViewDocument(selectedVerification, 'validId')}
-                        className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                      >
-                        View Full Size
-                      </button>
+                      <div className="relative mb-3">
+                        <img
+                          src={`http://localhost:5000/${selectedVerification.validIdPath}`}
+                          alt="Valid ID"
+                          className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
+                            blurredDocuments.validId ? 'blur-xl' : 'blur-none'
+                          }`}
+                        />
+                        {blurredDocuments.validId && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20 rounded-xl">
+                            <button
+                              onClick={() => setBlurredDocuments(prev => ({ ...prev, validId: false }))}
+                              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Click to View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {!blurredDocuments.validId && (
+                          <button
+                            onClick={() => setBlurredDocuments(prev => ({ ...prev, validId: true }))}
+                            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Hide
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleViewDocument(selectedVerification, 'validId')}
+                          className="flex-1 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                        >
+                          View Full Size
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <p className="text-sm text-slate-500">No document uploaded</p>
@@ -2384,17 +2750,42 @@ export default function AdminDashboard() {
                   </div>
                   {selectedVerification.proofOfResidencyPath ? (
                     <>
-                      <img
-                        src={`http://localhost:5000/${selectedVerification.proofOfResidencyPath}`}
-                        alt="Proof of Residency"
-                        className="mb-3 h-48 w-full rounded-xl object-cover"
-                      />
-                      <button
-                        onClick={() => handleViewDocument(selectedVerification, 'proofOfResidency')}
-                        className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                      >
-                        View Full Size
-                      </button>
+                      <div className="relative mb-3">
+                        <img
+                          src={`http://localhost:5000/${selectedVerification.proofOfResidencyPath}`}
+                          alt="Proof of Residency"
+                          className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
+                            blurredDocuments.proofOfResidency ? 'blur-xl' : 'blur-none'
+                          }`}
+                        />
+                        {blurredDocuments.proofOfResidency && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20 rounded-xl">
+                            <button
+                              onClick={() => setBlurredDocuments(prev => ({ ...prev, proofOfResidency: false }))}
+                              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Click to View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {!blurredDocuments.proofOfResidency && (
+                          <button
+                            onClick={() => setBlurredDocuments(prev => ({ ...prev, proofOfResidency: true }))}
+                            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Hide
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleViewDocument(selectedVerification, 'proofOfResidency')}
+                          className="flex-1 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                        >
+                          View Full Size
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <p className="text-sm text-slate-500">No document uploaded</p>
@@ -2406,7 +2797,10 @@ export default function AdminDashboard() {
             <div className="flex gap-3 border-t border-slate-100 pt-4">
               <button
                 type="button"
-                onClick={() => setSelectedVerification(null)}
+                onClick={() => {
+                  setSelectedVerification(null);
+                  setBlurredDocuments({ validId: true, proofOfResidency: true });
+                }}
                 className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 Close

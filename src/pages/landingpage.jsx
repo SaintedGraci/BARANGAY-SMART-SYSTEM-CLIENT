@@ -109,7 +109,7 @@ export const LandingPage = () => {
 
       {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a href="#home" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-sm">
               <img src={bakilidLogo} alt="Bakilid Logo" className="h-full w-full object-contain" />
@@ -141,15 +141,9 @@ export const LandingPage = () => {
             </button>
             <button
               onClick={() => navigate('/register')}
-              className="hidden rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 sm:inline-flex sm:items-center sm:gap-1.5"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow-md"
             >
               Register
-            </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow-md"
-            >
-              Get started
               <ArrowRight className="h-4 w-4" />
             </button>
             <button
@@ -183,15 +177,9 @@ export const LandingPage = () => {
               </button>
               <button
                 onClick={() => navigate('/register')}
-                className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700"
-              >
-                Register
-              </button>
-              <button
-                onClick={() => navigate('/login')}
                 className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
               >
-                Get started
+                Register
               </button>
             </div>
           </div>
@@ -200,7 +188,7 @@ export const LandingPage = () => {
 
       {/* Hero */}
       <section id="home" className="relative">
-        <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24 lg:px-8 lg:pb-28">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24 lg:px-8 lg:pb-28">
           <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-12">
             <div className="animate-fade-in-up">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-blue-50/80 px-3.5 py-1.5 text-sm font-medium text-blue-700">
@@ -330,7 +318,7 @@ export const LandingPage = () => {
 
       {/* Services — Bento grid */}
       <section id="services" className="relative py-20 sm:py-28">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">Platform features</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -366,7 +354,7 @@ export const LandingPage = () => {
 
       {/* How it works */}
       <section id="how-it-works" className="relative border-y border-slate-200/60 bg-white py-20 sm:py-28">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">How it works</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -396,7 +384,7 @@ export const LandingPage = () => {
 
       {/* Documents */}
       <section id="documents" className="relative py-20 sm:py-28">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-end">
             <div className="max-w-xl">
               <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">Available documents</p>
@@ -437,7 +425,7 @@ export const LandingPage = () => {
 
       {/* CTA */}
       <section className="relative px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-slate-900 px-8 py-16 text-center sm:px-16 sm:py-20">
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl bg-slate-900 px-8 py-16 text-center sm:px-16 sm:py-20">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-blue-500/30 blur-3xl" />
             <div className="absolute -bottom-16 right-0 h-48 w-48 rounded-full bg-violet-500/20 blur-3xl" />
@@ -478,7 +466,7 @@ export const LandingPage = () => {
 
       {/* Footer */}
       <footer id="contact" className="border-t border-slate-200/80 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3">
