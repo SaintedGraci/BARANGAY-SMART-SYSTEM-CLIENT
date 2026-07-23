@@ -15,6 +15,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Allow JS */
+    "allowJs": true,
+    "checkJs": false,
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
