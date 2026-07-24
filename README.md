@@ -1,73 +1,37 @@
-# React + TypeScript + Vite
+Barangay Smart System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An integrated digital governance platform built to streamline barangay operations, automate document issuance, track incident blotters, and simplify resident communication.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Core Features
+Resident Profiling & Demographics
+Centralized Resident Database: Manage household records, demographic stats, and tagging for special sectors (Senior Citizens, PWDs, 4Ps Beneficiaries, Solo Parents).
 
-## React Compiler
+E-Services & Document Request Engine
+Online Certificate Issuance: Request Barangay Clearance, Certificate of Indigency, Certificate of Residency, and First-Time Jobseeker Certificates online.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Document Approval Workflow: Barangay clerks/secretaries can verify attachments, attach digital signatures, and approve/reject requests.
 
-## Expanding the ESLint configuration
+Status Tracking & Notifications: Real-time SMS and portal notifications for document pick-up or status updates.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Blotter & Lupon Case Management
+Incident Reporting: Record public blotters, schedule mediation hearings, and maintain confidential case records.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Citizen Incident Logging: Resident-led reporting for local emergencies, noise complaints, or community hazards with geotagging.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Broadcasts & Disaster Response
+Mass SMS & Announcements: Send urgent community alerts (typhoon warnings, power interruptions, health drives) using local SMS gateways.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Emergency Assistance: Dedicated beacon/SOS dispatch interface for Barangay Tanods and disaster response units.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Tech Stack
+Update this list with the actual framework and database you are using.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Frontend: React.js 
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Backend: Node.js (Express) 
+
+Database: MySQL 
+
+Authentication: Role-Based Access Control (RBAC) with JWT
+
