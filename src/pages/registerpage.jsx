@@ -29,7 +29,6 @@ export default function RegisterPage() {
     street: "",
     purok: "",
     username: "",
-    email: "",
     password: "",
     confirmPassword: "",
     validId: null,
@@ -93,10 +92,6 @@ export default function RegisterPage() {
   const validateStep2 = () => {
     if (!formData.username || formData.username.length < 3) {
       setError("Username must be at least 3 characters");
-      return false;
-    }
-    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
-      setError("Valid email is required");
       return false;
     }
     if (!formData.password || formData.password.length < 8) {
@@ -165,7 +160,7 @@ export default function RegisterPage() {
     try {
       const submitData = new FormData();
       submitData.append('username', formData.username);
-      submitData.append('email', formData.email);
+      submitData.append('email', formData.gmail || formData.username + '@bakilid.local');
       submitData.append('password', formData.password);
       submitData.append('firstName', formData.firstName);
       submitData.append('middleName', formData.middleName);
@@ -524,23 +519,6 @@ export default function RegisterPage() {
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">This will be your unique identifier</p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1">
-                  Email Address <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="email"
-                    required
-                    placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full rounded-xl border-2 border-slate-200 bg-white py-3 pr-4 pl-12 text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 hover:border-slate-300"
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">
