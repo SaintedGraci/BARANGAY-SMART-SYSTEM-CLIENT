@@ -642,9 +642,6 @@ export default function RegisterPage() {
                     <button type="button" onClick={() => window.open('/privacy', '_blank')} className="text-purple-600 hover:text-purple-700 font-semibold hover:underline">
                       Privacy Policy
                     </button>
-                  </span>00 font-semibold hover:underline">
-                      Privacy Policy
-                    </button>
                   </span>
                 </label>
               </div>
