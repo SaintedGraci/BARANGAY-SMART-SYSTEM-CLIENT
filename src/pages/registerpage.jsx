@@ -191,9 +191,9 @@ export default function RegisterPage() {
   };
 
   const steps = [
-    { number: 1, title: "Personal Info", icon: User, color: "from-blue-500 to-cyan-500" },
-    { number: 2, title: "Account", icon: ShieldCheck, color: "from-purple-500 to-pink-500" },
-    { number: 3, title: "Verification", icon: Upload, color: "from-orange-500 to-red-500" }
+    { number: 1, title: "Personal Info", icon: User },
+    { number: 2, title: "Account", icon: ShieldCheck },
+    { number: 3, title: "Verification", icon: Upload }
   ];
 
   if (registrationSuccess) {
@@ -320,8 +320,8 @@ export default function RegisterPage() {
             {/* Barangay Logo */}
             <div className="flex justify-center mb-6">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-2xl opacity-20 animate-pulse" />
-                <div className="relative h-28 w-28 rounded-2xl bg-white p-4 shadow-2xl shadow-blue-500/30 ring-4 ring-blue-100 border border-slate-200">
+                <div className="absolute inset-0 bg-blue-500/20 rounded-2xl blur-2xl" />
+                <div className="relative h-24 w-24 rounded-xl bg-white p-4 shadow-xl border border-slate-200">
                   <img 
                     src={bakilidLogo} 
                     alt="Barangay Bakilid Logo" 
@@ -330,18 +330,18 @@ export default function RegisterPage() {
                 </div>
               </div>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+            <h1 className="text-4xl font-bold text-slate-900 mb-3">
               Create Your Account
             </h1>
-            <p className="text-slate-600 text-lg">Step {currentStep} of 3 • {steps[currentStep - 1].title}</p>
+            <p className="text-slate-600 text-lg">Step {currentStep} of 3</p>
           </div>
           
           {/* Modern Progress Steps */}
           <div className="relative flex items-center justify-between mb-8">
             {/* Progress Line */}
-            <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 bg-slate-200 rounded-full" />
+            <div className="absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2 bg-slate-200" />
             <div 
-              className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500"
+              className="absolute top-1/2 left-0 h-0.5 -translate-y-1/2 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500"
               style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
             />
             
@@ -353,22 +353,26 @@ export default function RegisterPage() {
               return (
                 <div key={step.number} className="relative flex flex-col items-center z-10">
                   <div className={`
-                    flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 shadow-lg
+                    relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 border-4 bg-white
                     ${isCompleted 
-                      ? 'bg-gradient-to-br from-green-400 to-emerald-600 scale-100' 
+                      ? 'border-green-500 shadow-lg shadow-green-500/20' 
                       : isActive 
-                      ? `bg-gradient-to-br ${step.color} scale-110 ring-4 ring-white shadow-xl` 
-                      : 'bg-white border-2 border-slate-300 scale-90'}
+                      ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
+                      : 'border-slate-200'}
                   `}>
                     {isCompleted ? (
-                      <Check className="h-8 w-8 text-white" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
+                          <Check className="h-5 w-5 text-white" strokeWidth={3} />
+                        </div>
+                      </div>
                     ) : (
-                      <Icon className={`h-8 w-8 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                      <Icon className={`h-6 w-6 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} strokeWidth={2} />
                     )}
                   </div>
                   <p className={`
                     mt-3 text-sm font-semibold transition-all
-                    ${isActive ? 'text-slate-900 scale-105' : isCompleted ? 'text-green-600' : 'text-slate-400'}
+                    ${isActive ? 'text-slate-900' : isCompleted ? 'text-green-600' : 'text-slate-400'}
                   `}>
                     {step.title}
                   </p>
@@ -388,9 +392,9 @@ export default function RegisterPage() {
 
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
-            <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-slate-200/50 space-y-6 animate-[fadeIn_0.4s_ease-out]">
+            <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-slate-200/50 space-y-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center">
                   <User className="h-5 w-5 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800">Personal Information</h2>
@@ -529,9 +533,9 @@ export default function RegisterPage() {
 
           {/* Step 2: Account Setup */}
           {currentStep === 2 && (
-            <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-slate-200/50 space-y-6 animate-[fadeIn_0.4s_ease-out]">
+            <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-slate-200/50 space-y-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-purple-600 flex items-center justify-center">
                   <ShieldCheck className="h-5 w-5 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800">Account Setup</h2>
@@ -646,9 +650,9 @@ export default function RegisterPage() {
 
           {/* Step 3: Verification */}
           {currentStep === 3 && (
-            <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-slate-200/50 space-y-6 animate-[fadeIn_0.4s_ease-out]">
+            <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-slate-200/50 space-y-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center">
                   <Upload className="h-5 w-5 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800">Document Verification</h2>
