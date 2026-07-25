@@ -635,11 +635,14 @@ export default function RegisterPage() {
                   />
                   <span className="text-sm text-slate-700 leading-relaxed">
                     I agree to the{" "}
-                    <button type="button" className="text-purple-600 hover:text-purple-700 font-semibold hover:underline">
+                    <button type="button" onClick={() => window.open('/terms', '_blank')} className="text-purple-600 hover:text-purple-700 font-semibold hover:underline">
                       Terms of Service
                     </button>
                     {" "}and{" "}
-                    <button type="button" className="text-purple-600 hover:text-purple-700 font-semibold hover:underline">
+                    <button type="button" onClick={() => window.open('/privacy', '_blank')} className="text-purple-600 hover:text-purple-700 font-semibold hover:underline">
+                      Privacy Policy
+                    </button>
+                  </span>00 font-semibold hover:underline">
                       Privacy Policy
                     </button>
                   </span>
