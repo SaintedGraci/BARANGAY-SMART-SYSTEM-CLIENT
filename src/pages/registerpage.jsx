@@ -198,36 +198,86 @@ export default function RegisterPage() {
 
   if (registrationSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-        <div className="w-full max-w-md animate-[fadeIn_0.5s_ease-in-out]">
-          <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-slate-800/90 to-slate-900/90 p-10 backdrop-blur-xl shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
-            <div className="relative">
-              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-green-600 shadow-lg shadow-emerald-500/50">
-                <CheckCircle className="h-12 w-12 text-white animate-[bounce_1s_ease-in-out]" />
-              </div>
-              <h2 className="mb-4 text-3xl font-bold text-white text-center">Registration Submitted!</h2>
-              <div className="mb-8 space-y-3 text-center">
-                <p className="text-slate-300 text-lg">Your registration has been submitted successfully.</p>
-                <p className="text-sm text-slate-400">
-                  Please wait for the Barangay Administrator to verify your account.
-                </p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 p-5 mb-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">Status</p>
-                    <p className="text-base font-medium text-amber-300">Pending Verification</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 flex items-center justify-center p-6">
+        <div className="w-full max-w-2xl">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-slate-200/50 overflow-hidden">
+            {/* Header with gradient accent */}
+            <div className="relative h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+            
+            <div className="p-10">
+              {/* Logo Section */}
+              <div className="flex justify-center mb-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl blur-xl opacity-30" />
+                  <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                    <CheckCircle className="h-10 w-10 text-white" strokeWidth={2.5} />
                   </div>
-                  <div className="h-3 w-3 rounded-full bg-amber-400 animate-pulse" />
                 </div>
               </div>
-              <button
-                onClick={() => navigate('/login')}
-                className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-4 text-base font-semibold text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/40 active:scale-95"
-              >
-                Go to Login
-              </button>
+
+              {/* Main Content */}
+              <div className="text-center space-y-6">
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-900 mb-2">Registration Submitted</h2>
+                  <p className="text-lg text-slate-600">Thank you for registering with Barangay Bakilid</p>
+                </div>
+
+                {/* Status Card */}
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                        <AlertCircle className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-semibold text-amber-900 uppercase tracking-wider">Current Status</p>
+                        <p className="text-base font-bold text-amber-700">Pending Verification</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                      <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse delay-75" />
+                      <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse delay-150" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-amber-800 leading-relaxed">
+                    Your account is currently under review by the Barangay Administrator. You will receive a notification once your account has been verified and activated.
+                  </p>
+                </div>
+
+                {/* Information Box */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-left space-y-3">
+                  <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wider">What happens next?</h3>
+                  <div className="space-y-2 text-sm text-slate-600">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      </div>
+                      <p>The administrator will review your submitted documents</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      </div>
+                      <p>You will be notified via email once verification is complete</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      </div>
+                      <p>After approval, you can log in using your credentials</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full mt-8 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-4 text-base font-semibold text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  Go to Login Page
+                </button>
+              </div>
             </div>
           </div>
         </div>
