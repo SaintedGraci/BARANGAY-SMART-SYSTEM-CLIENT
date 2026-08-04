@@ -245,7 +245,7 @@ export default function RegisterPage() {
       submitData.append('validId', formData.validId);
       submitData.append('proofOfResidency', formData.proofOfResidency);
 
-      const response = await axios.post('http://localhost:5000/api/auth/register', submitData, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register`, submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
