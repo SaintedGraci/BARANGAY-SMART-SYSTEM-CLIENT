@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
     rememberMe: false,
   });
@@ -21,7 +21,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
-    const result = await login(formData.email, formData.password);
+    const result = await login(formData.username, formData.password);
 
     if (result.success) {
       const userData = JSON.parse(localStorage.getItem("user"));
@@ -115,25 +115,25 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Email */}
+            {/* Username */}
             <div className="space-y-1.5">
               <label
-                htmlFor="email"
+                htmlFor="username"
                 className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400"
               >
-                Email Address
+                Username
               </label>
               <div className="relative group">
                 <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-sky-400" />
                 <input
-                  id="email"
-                  type="email"
+                  id="username"
+                  type="text"
                   required
                   disabled={isLoading}
-                  placeholder="you@example.com"
-                  value={formData.email}
+                  placeholder="johndoe"
+                  value={formData.username}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({ ...formData, username: e.target.value })
                   }
                   className="w-full rounded-xl border border-slate-800/80 bg-slate-900/60 py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none shadow-sm shadow-slate-950/40 transition-all focus:border-sky-500/60 focus:bg-slate-950/80 focus:ring-4 focus:ring-sky-500/15 disabled:cursor-not-allowed disabled:opacity-70"
                 />

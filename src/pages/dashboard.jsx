@@ -41,35 +41,35 @@ function DashboardModal({ isOpen, onClose, title, subtitle, icon: Icon, children
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className={`relative w-full ${maxWidth} max-h-[90vh] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl`}
+        className={`relative w-full ${maxWidth} max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-200/80 bg-white shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between border-b border-slate-200/80 bg-slate-50/90 px-6 py-5">
-          <div className="flex items-start gap-3">
+        <div className="flex items-start justify-between border-b border-slate-200/80 bg-slate-50/90 px-4 sm:px-6 py-4 sm:py-5 sticky top-0 z-10">
+          <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
             {Icon && (
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
-                <Icon className="h-5 w-5" />
+              <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-slate-900 text-white shadow-sm">
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             )}
-            <div>
-              <h3 className="text-lg font-bold tracking-tight text-slate-900">{title}</h3>
-              {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate">{title}</h3>
+              {subtitle && <p className="mt-0.5 text-xs sm:text-sm text-slate-500 line-clamp-2">{subtitle}</p>}
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 flex-shrink-0 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="max-h-[calc(90vh-88px)] overflow-y-auto p-6">{children}</div>
+        <div className="max-h-[calc(90vh-88px)] sm:max-h-[calc(85vh-88px)] overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );
@@ -78,8 +78,8 @@ function DashboardModal({ isOpen, onClose, title, subtitle, icon: Icon, children
 function ModalSection({ icon: Icon, title, children }) {
   return (
     <div>
-      <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-        <Icon className="h-4 w-4 text-blue-600" />
+      <h4 className="mb-2 sm:mb-3 flex items-center gap-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+        <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
         {title}
       </h4>
       {children}
@@ -251,7 +251,7 @@ export default function Dashboard() {
   const [isComplaintDetailOpen, setIsComplaintDetailOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
   const [requestForm, setRequestForm] = useState({
@@ -407,40 +407,53 @@ export default function Dashboard() {
         <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-indigo-400/10 blur-3xl" />
       </div>
 
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 border-r border-slate-200/70 bg-white/80 backdrop-blur-xl transition-all duration-300 lg:static ${
-        isSidebarOpen ? 'w-64' : 'w-20'
+      <aside className={`fixed inset-y-0 left-0 z-50 border-r border-slate-200/70 bg-white/95 backdrop-blur-xl transition-transform duration-300 lg:static lg:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:w-20'
       }`}>
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-slate-200/70 p-4">
+          <div className="flex items-center justify-between border-b border-slate-200/70 p-3 sm:p-4">
             {isSidebarOpen && (
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
                   <img src={bakilidLogo} alt="Bakilid Logo" className="h-full w-full object-contain" />
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-slate-900">Barangay Bakilid</span>
-                  <p className="text-xs font-medium text-blue-600">Resident Portal</p>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900">Barangay Bakilid</span>
+                  <p className="text-[10px] sm:text-xs font-medium text-blue-600">Resident Portal</p>
                 </div>
               </div>
             )}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <Menu className="h-5 w-5" />
             </button>
           </div>
 
-          <nav className="flex-1 space-y-1 p-3">
+          <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (window.innerWidth < 1024) {
+                      setIsSidebarOpen(false);
+                    }
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all touch-manipulation min-h-[44px] ${
                     isActive
                       ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -453,22 +466,22 @@ export default function Dashboard() {
             })}
           </nav>
 
-          <div className="border-t border-slate-200/70 p-4">
+          <div className="border-t border-slate-200/70 p-3 sm:p-4">
             <div className={`flex items-center gap-3 ${!isSidebarOpen && 'justify-center'}`}>
-              <div cl assName="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-bold text-white">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-xs sm:text-sm font-bold text-white">
                 {user?.username?.charAt(0).toUpperCase()}
               </div>
               {isSidebarOpen && (
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900">{user?.username}</p>
-                  <p className="text-xs font-medium capitalize text-blue-600">{user?.role}</p>
+                  <p className="truncate text-xs sm:text-sm font-semibold text-slate-900">{user?.username}</p>
+                  <p className="text-[10px] sm:text-xs font-medium capitalize text-blue-600">{user?.role}</p>
                 </div>
               )}
             </div>
             {isSidebarOpen && (
               <button
                 onClick={handleLogout}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-xs sm:text-sm font-medium text-red-600 transition-colors hover:bg-red-100 touch-manipulation min-h-[44px]"
               >
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -479,31 +492,39 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1">
+      <main className="relative z-10 flex-1 lg:ml-0">
         <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                {menuItems.find((item) => item.id === activeTab)?.name}
-              </h1>
-              <p className="text-sm text-slate-500">
-                {activeTab === 'dashboard' && 'Overview of your barangay services'}
-                {activeTab === 'requests' && 'Track and manage document requests'}
-                {activeTab === 'complaints' && 'View and file complaints'}
-                {activeTab === 'announcements' && 'Latest updates from your barangay'}
-                {activeTab === 'hotline' && 'Emergency and essential contact numbers'}
-                {activeTab === 'profile' && 'Your account information'}
-              </p>
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 truncate">
+                  {menuItems.find((item) => item.id === activeTab)?.name}
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">
+                  {activeTab === 'dashboard' && 'Overview of your barangay services'}
+                  {activeTab === 'requests' && 'Track and manage document requests'}
+                  {activeTab === 'complaints' && 'View and file complaints'}
+                  {activeTab === 'announcements' && 'Latest updates from your barangay'}
+                  {activeTab === 'hotline' && 'Emergency and essential contact numbers'}
+                  {activeTab === 'profile' && 'Your account information'}
+                </p>
+              </div>
             </div>
 
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative rounded-xl p-2.5 text-slate-600 transition-colors hover:bg-slate-100"
+                className="relative rounded-xl p-2 sm:p-2.5 text-slate-600 transition-colors hover:bg-slate-100 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  <span className="absolute right-0.5 top-0.5 sm:right-1 sm:top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-[10px] sm:text-xs font-bold text-white">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -511,28 +532,34 @@ export default function Dashboard() {
 
               {/* Notification Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50">
-                  <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900">Notifications</h3>
-                    {unreadCount > 0 && (
+                <div className="fixed inset-x-0 top-[60px] sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 bg-white rounded-none sm:rounded-lg shadow-xl border-t sm:border border-slate-200 max-h-[calc(100vh-60px)] sm:max-h-96 overflow-y-auto z-50">
+                  <div className="p-3 sm:p-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white">
+                    <h3 className="font-bold text-slate-900 text-sm sm:text-base">Notifications</h3>
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-medium touch-manipulation py-2 px-3"
+                        >
+                          Mark all read
+                        </button>
+                      )}
                       <button
-                        onClick={markAllAsRead}
-                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        onClick={() => setShowNotifications(false)}
+                        className="sm:hidden rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 touch-manipulation"
                       >
-                        Mark all as read
+                        <X className="h-4 w-4" />
                       </button>
-                    )}
+                    </div>
                   </div>
                   
                   {notifications.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
-                      <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                      <p className="text-sm">No notifications yet</p>
+                    <div className="p-8 text-center text-slate-500">
+                      <Bell className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 text-slate-300" />
+                      <p className="text-xs sm:text-sm">No notifications yet</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-slate-100">
                       {notifications.map((notif) => (
                         <div
                           key={notif.id}
@@ -541,24 +568,22 @@ export default function Dashboard() {
                             setShowNotifications(false);
                             setActiveTab('requests');
                           }}
-                          className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                          className={`p-3 sm:p-4 hover:bg-slate-50 cursor-pointer transition-colors touch-manipulation ${
                             !notif.read ? 'bg-blue-50' : ''
                           }`}
                         >
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
                                 {notif.documentType}
                               </p>
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="text-xs sm:text-sm text-slate-600 mt-1 line-clamp-2">
                                 {notif.message}
                               </p>
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="text-[10px] sm:text-xs text-slate-400 mt-1">
                                 {new Date(notif.timestamp).toLocaleString()}
                               </p>
                             </div>
@@ -577,21 +602,21 @@ export default function Dashboard() {
         </header>
 
         {/* Content Area */}
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 lg:p-8">
           {activeTab === 'dashboard' && (
             <>
-              <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 p-6 text-white shadow-xl sm:p-8">
-                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+              <div className="relative mb-6 sm:mb-8 overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 p-5 sm:p-6 md:p-8 text-white shadow-xl">
+                <div className="absolute -right-10 -top-10 h-32 w-32 sm:h-40 sm:w-40 rounded-full bg-white/10 blur-2xl" />
                 <div className="relative">
-                  <p className="text-sm font-medium text-blue-200">Welcome back</p>
-                  <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{user?.username}!</h2>
-                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100">
+                  <p className="text-xs sm:text-sm font-medium text-blue-200">Welcome back</p>
+                  <h2 className="mt-1 text-xl sm:text-2xl md:text-3xl font-bold">{user?.username}!</h2>
+                  <p className="mt-2 max-w-xl text-xs sm:text-sm leading-relaxed text-blue-100">
                     Manage document requests, stay updated with announcements, and access emergency hotlines anytime.
                   </p>
-                  <div className="mt-5 flex flex-wrap gap-3">
+                  <div className="mt-4 sm:mt-5 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
                     <button
                       onClick={() => setIsDocumentListOpen(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-blue-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg sm:rounded-xl bg-white px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-blue-50 touch-manipulation min-h-[44px]"
                     >
                       <Plus className="h-4 w-4" />
                       New Request
@@ -607,7 +632,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mb-6 sm:mb-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { label: 'Total Requests', value: requests.length, icon: FileText, tone: 'text-blue-600', bg: 'bg-blue-50' },
                   { label: 'Pending', value: pendingCount, icon: Clock, tone: 'text-amber-600', bg: 'bg-amber-50' },
@@ -616,14 +641,14 @@ export default function Dashboard() {
                 ].map((stat) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={stat.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:shadow-md">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-slate-500">{stat.label}</p>
-                          <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{stat.value}</p>
+                    <div key={stat.label} className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm transition hover:shadow-md">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm text-slate-500 truncate">{stat.label}</p>
+                          <p className="mt-0.5 sm:mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{stat.value}</p>
                         </div>
-                        <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.bg}`}>
-                          <Icon className={`h-5 w-5 ${stat.tone}`} />
+                        <div className={`flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl ${stat.bg} flex-shrink-0`}>
+                          <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.tone}`} />
                         </div>
                       </div>
                     </div>
@@ -631,55 +656,55 @@ export default function Dashboard() {
                 })}
               </div>
 
-              <div className="grid gap-6 xl:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm xl:col-span-1">
-                  <h3 className="text-lg font-bold text-slate-900">Quick Actions</h3>
-                  <p className="mt-1 text-sm text-slate-500">Common tasks for residents</p>
-                  <div className="mt-5 space-y-3">
+              <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+                <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm lg:col-span-1">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900">Quick Actions</h3>
+                  <p className="mt-1 text-xs sm:text-sm text-slate-500">Common tasks for residents</p>
+                  <div className="mt-4 sm:mt-5 space-y-2 sm:space-y-3">
                     <button
                       onClick={() => setIsDocumentListOpen(true)}
-                      className="flex w-full items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-left transition hover:bg-blue-50"
+                      className="flex w-full items-center gap-3 rounded-lg sm:rounded-xl border border-blue-100 bg-blue-50/70 p-3 sm:p-4 text-left transition hover:bg-blue-50 touch-manipulation"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-                        <Plus className="h-5 w-5" />
+                      <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-blue-600 text-white flex-shrink-0">
+                        <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">New Document Request</p>
-                        <p className="text-sm text-slate-500">Request barangay documents online</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-slate-900 text-sm sm:text-base">New Document Request</p>
+                        <p className="text-xs sm:text-sm text-slate-500 truncate">Request barangay documents online</p>
                       </div>
                     </button>
                     <button
                       onClick={() => setIsComplaintModalOpen(true)}
-                      className="flex w-full items-center gap-3 rounded-xl border border-amber-100 bg-amber-50/70 p-4 text-left transition hover:bg-amber-50"
+                      className="flex w-full items-center gap-3 rounded-lg sm:rounded-xl border border-amber-100 bg-amber-50/70 p-3 sm:p-4 text-left transition hover:bg-amber-50 touch-manipulation"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600 text-white">
-                        <AlertCircle className="h-5 w-5" />
+                      <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-amber-600 text-white flex-shrink-0">
+                        <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">File a Complaint</p>
-                        <p className="text-sm text-slate-500">Report issues to the barangay</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-slate-900 text-sm sm:text-base">File a Complaint</p>
+                        <p className="text-xs sm:text-sm text-slate-500 truncate">Report issues to the barangay</p>
                       </div>
                     </button>
                     <button
                       onClick={() => setActiveTab('requests')}
-                      className="flex w-full items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 text-left transition hover:bg-emerald-50"
+                      className="flex w-full items-center gap-3 rounded-lg sm:rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 sm:p-4 text-left transition hover:bg-emerald-50 touch-manipulation"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 text-white">
-                        <FileText className="h-5 w-5" />
+                      <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-emerald-600 text-white flex-shrink-0">
+                        <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">View My Requests</p>
-                        <p className="text-sm text-slate-500">Track document status in real time</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-slate-900 text-sm sm:text-base">View My Requests</p>
+                        <p className="text-xs sm:text-sm text-slate-500 truncate">Track document status in real time</p>
                       </div>
                     </button>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm xl:col-span-1">
-                  <div className="mb-4 flex items-center justify-between">
+                <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm lg:col-span-2">
+                  <div className="mb-3 sm:mb-4 flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900">Essential Hotlines</h3>
-                      <p className="text-sm text-slate-500">Reference contact numbers</p>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900">Essential Hotlines</h3>
+                      <p className="text-xs sm:text-sm text-slate-500">Reference contact numbers</p>
                     </div>
                     <button
                       onClick={() => setActiveTab('hotline')}
