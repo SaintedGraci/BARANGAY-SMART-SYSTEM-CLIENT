@@ -699,7 +699,7 @@ export default function AdminDashboard() {
     if (docPath) {
       setDocumentToView({
         type: docType,
-        path: `http://localhost:5000/${docPath}`,
+        path: docPath,
         resident: residentName(resident),
       });
       setShowDocumentModal(true);
@@ -1613,7 +1613,7 @@ export default function AdminDashboard() {
                               </div>
                               {resident.validIdPath && (
                                 <a
-                                  href={`http://localhost:5000${resident.validIdPath}`}
+                                  href={resident.validIdPath}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
@@ -1627,7 +1627,7 @@ export default function AdminDashboard() {
                             {resident.validIdPath ? (
                               <div className="relative overflow-hidden rounded-lg border border-slate-200">
                                 <img
-                                  src={`http://localhost:5000${resident.validIdPath}`}
+                                  src={resident.validIdPath}
                                   alt="Valid ID"
                                   className={`h-56 w-full object-contain bg-slate-50 transition-all duration-300 ${
                                     blurredInlineDocuments[`${resident.id}-validId`] !== false ? 'blur-xl' : 'blur-none'
@@ -1674,7 +1674,7 @@ export default function AdminDashboard() {
                               </div>
                               {resident.proofOfResidencyPath && (
                                 <a
-                                  href={`http://localhost:5000${resident.proofOfResidencyPath}`}
+                                  href={resident.proofOfResidencyPath}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
@@ -1688,7 +1688,7 @@ export default function AdminDashboard() {
                             {resident.proofOfResidencyPath ? (
                               <div className="relative overflow-hidden rounded-lg border border-slate-200">
                                 <img
-                                  src={`http://localhost:5000${resident.proofOfResidencyPath}`}
+                                  src={resident.proofOfResidencyPath}
                                   alt="Proof of Residency"
                                   className={`h-56 w-full object-contain bg-slate-50 transition-all duration-300 ${
                                     blurredInlineDocuments[`${resident.id}-proofOfResidency`] !== false ? 'blur-xl' : 'blur-none'
@@ -1790,7 +1790,7 @@ export default function AdminDashboard() {
                     <div key={announcement.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                       {announcement.imagePath && (
                         <img 
-                          src={`http://localhost:5000/${announcement.imagePath}`} 
+                          src={announcement.imagePath} 
                           alt={announcement.title}
                           className="w-full h-48 object-cover"
                           onError={(e) => {
@@ -2090,7 +2090,7 @@ export default function AdminDashboard() {
               <div className="mt-2">
                 <p className="text-xs text-slate-500 mb-2">Current image:</p>
                 <img 
-                  src={`http://localhost:5000/${editingAnnouncement.imagePath}`} 
+                  src={editingAnnouncement.imagePath} 
                   alt="Current announcement" 
                   className="h-32 w-full rounded-lg object-cover"
                 />
@@ -2439,7 +2439,7 @@ export default function AdminDashboard() {
                           <p className="mt-0.5 text-xs text-slate-500">Government-issued identification</p>
                         </div>
                         <a
-                          href={`http://localhost:5000${selectedResident.validIdPath}`}
+                          href={selectedResident.validIdPath}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
@@ -2450,7 +2450,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
                         <img
-                          src={`http://localhost:5000${selectedResident.validIdPath}`}
+                          src={selectedResident.validIdPath}
                           alt="Valid ID"
                           className={`h-64 w-full object-contain transition-all duration-300 ${
                             blurredResidentDocs.validId ? 'blur-xl' : 'blur-none'
@@ -2494,7 +2494,7 @@ export default function AdminDashboard() {
                           <p className="mt-0.5 text-xs text-slate-500">Barangay clearance or utility bill</p>
                         </div>
                         <a
-                          href={`http://localhost:5000${selectedResident.proofOfResidencyPath}`}
+                          href={selectedResident.proofOfResidencyPath}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
@@ -2505,7 +2505,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
                         <img
-                          src={`http://localhost:5000${selectedResident.proofOfResidencyPath}`}
+                          src={selectedResident.proofOfResidencyPath}
                           alt="Proof of Residency"
                           className={`h-64 w-full object-contain transition-all duration-300 ${
                             blurredResidentDocs.proofOfResidency ? 'blur-xl' : 'blur-none'
@@ -2703,7 +2703,7 @@ export default function AdminDashboard() {
                     <>
                       <div className="relative mb-3">
                         <img
-                          src={`http://localhost:5000/${selectedVerification.validIdPath}`}
+                          src={selectedVerification.validIdPath}
                           alt="Valid ID"
                           className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
                             blurredDocuments.validId ? 'blur-xl' : 'blur-none'
@@ -2752,7 +2752,7 @@ export default function AdminDashboard() {
                     <>
                       <div className="relative mb-3">
                         <img
-                          src={`http://localhost:5000/${selectedVerification.proofOfResidencyPath}`}
+                          src={selectedVerification.proofOfResidencyPath}
                           alt="Proof of Residency"
                           className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
                             blurredDocuments.proofOfResidency ? 'blur-xl' : 'blur-none'

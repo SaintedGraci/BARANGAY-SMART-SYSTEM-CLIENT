@@ -852,7 +852,7 @@ export default function Dashboard() {
                     <div key={announcement.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                       {announcement.imagePath && (
                         <img 
-                          src={`http://localhost:5000/${announcement.imagePath}`} 
+                          src={announcement.imagePath} 
                           alt={announcement.title}
                           className="w-full h-64 object-cover"
                           onError={(e) => {
