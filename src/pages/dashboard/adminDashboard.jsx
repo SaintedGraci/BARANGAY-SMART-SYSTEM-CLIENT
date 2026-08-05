@@ -338,6 +338,8 @@ export default function AdminDashboard() {
   });
   const [pendingVerifications, setPendingVerifications] = useState([]);
   const [selectedVerification, setSelectedVerification] = useState(null);
+  const [verificationSearch, setVerificationSearch] = useState('');
+  const [verificationStatusFilter, setVerificationStatusFilter] = useState('all');
   const [blurredDocuments, setBlurredDocuments] = useState({
     validId: true,
     proofOfResidency: true
@@ -429,6 +431,19 @@ export default function AdminDashboard() {
       setLoadingVerifications(false);
     }
   };
+
+  // Filter verifications based on search and status
+  const filteredVerifications = pendingVerifications.filter(resident => {
+    const searchLower = verificationSearch.toLowerCase();
+    const fullName = residentName(resident).toLowerCase();
+    const email = (resident.User?.email || '').toLowerCase();
+    
+    const matchesSearch = fullName.includes(searchLower) || email.includes(searchLower);
+    const matchesStatus = verificationStatusFilter === 'all' || 
+      resident.verificationStatus === verificationStatusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const fetchAnnouncements = async () => {
     try {
@@ -1509,6 +1524,7 @@ export default function AdminDashboard() {
 
           {activeTab === 'verifications' && (
             <div className="space-y-6">
+              {/* Header */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -1525,230 +1541,304 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Filters */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Search by name or email..."
+                      value={verificationSearch}
+                      onChange={(e) => setVerificationSearch(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900 focus:ring-offset-0"
+                    />
+                  </div>
+                  <select
+                    value={verificationStatusFilter}
+                    onChange={(e) => setVerificationStatusFilter(e.target.value)}
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900 focus:ring-offset-0"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Table */}
               {loadingVerifications ? (
                 <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-16">
                   <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
                 </div>
-              ) : pendingVerifications.length === 0 ? (
-                <EmptyState
-                  icon={ShieldCheck}
-                  title="No pending verifications"
-                  description="All resident registrations have been reviewed."
-                  action={
-                    <button
-                      onClick={fetchPendingVerifications}
-                      className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-                    >
-                      Check Again
-                    </button>
-                  }
-                />
               ) : (
-                <div className="space-y-6">
-                  {pendingVerifications.map((resident) => (
-                    <div key={resident.id} className="rounded-2xl border border-amber-200 bg-gradient-to-br from-white to-amber-50/30 p-6 shadow-sm">
-                      {/* Header */}
-                      <div className="flex items-start justify-between border-b border-amber-100 pb-5">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-lg font-bold text-white shadow-lg shadow-amber-900/20">
-                            {residentInitials(resident)}
-                          </div>
-                          <div>
-                            <h4 className="text-xl font-bold text-slate-950">{residentName(resident)}</h4>
-                            <p className="mt-1 text-sm text-slate-600">@{resident.User?.username}</p>
-                            <p className="mt-0.5 text-sm text-slate-500">{resident.User?.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
-                            <Clock className="h-3.5 w-3.5" />
-                            PENDING REVIEW
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            {formatDate(resident.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Personal Info Grid */}
-                      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {[
-                          { label: 'Birth Date', value: formatDate(resident.birthDate), icon: CalendarDays },
-                          { label: 'Contact', value: resident.contactNumber || 'N/A', icon: Phone },
-                          { label: 'Purok', value: resident.purok || 'N/A', icon: MapPin },
-                          { label: 'Gender', value: resident.gender || 'N/A', icon: Users },
-                        ].map((item) => (
-                          <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                            <div className="flex items-center gap-2 text-slate-400">
-                              <item.icon className="h-4 w-4" />
-                              <p className="text-xs font-semibold uppercase tracking-wide">{item.label}</p>
-                            </div>
-                            <p className="mt-2 text-sm font-bold text-slate-950">{item.value}</p>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-center gap-2 text-slate-400">
-                          <MapPin className="h-4 w-4" />
-                          <p className="text-xs font-semibold uppercase tracking-wide">Full Address</p>
-                        </div>
-                        <p className="mt-2 text-sm font-semibold text-slate-700">{fullAddress(resident)}</p>
-                      </div>
-
-                      {/* Documents Section */}
-                      <div className="mt-6">
-                        <h5 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-700">
-                          <FileCheck className="h-5 w-5 text-blue-600" />
-                          Verification Documents
-                        </h5>
-                        
-                        <div className="grid gap-4 lg:grid-cols-2">
-                          {/* Valid ID */}
-                          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                            <div className="mb-3 flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-bold text-slate-950">Valid ID</p>
-                                <p className="mt-0.5 text-xs text-slate-500">Government-issued identification</p>
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b border-slate-200 bg-slate-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            Resident
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            Contact
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            Purok
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            Date Submitted
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            Status
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {filteredVerifications.length === 0 ? (
+                          <tr>
+                            <td colSpan="6" className="px-4 py-16 text-center">
+                              <div className="flex flex-col items-center justify-center">
+                                <ShieldCheck className="h-12 w-12 text-slate-300 mb-3" />
+                                <p className="text-sm font-semibold text-slate-900">No pending verifications</p>
+                                <p className="text-xs text-slate-500 mt-1">All resident registrations have been reviewed.</p>
                               </div>
-                              {resident.validIdPath && (
-                                <a
-                                  href={resident.validIdPath}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredVerifications.map((resident) => (
+                            <tr key={resident.id} className="hover:bg-slate-50 transition">
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-sm font-bold text-white">
+                                    {residentInitials(resident)}
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">{residentName(resident)}</p>
+                                    <p className="text-xs text-slate-500">{resident.User?.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4">
+                                <p className="text-sm text-slate-700">{resident.contactNumber || 'N/A'}</p>
+                              </td>
+                              <td className="px-4 py-4">
+                                <p className="text-sm text-slate-700">{resident.purok || 'N/A'}</p>
+                              </td>
+                              <td className="px-4 py-4">
+                                <p className="text-sm text-slate-700">{formatDate(resident.createdAt)}</p>
+                              </td>
+                              <td className="px-4 py-4">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                                  <Clock className="h-3 w-3" />
+                                  Pending
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <button
+                                  onClick={() => setSelectedVerification(resident)}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
-                                  Open
-                                </a>
-                              )}
-                            </div>
-                            
-                            {resident.validIdPath ? (
-                              <div className="relative overflow-hidden rounded-lg border border-slate-200">
-                                <img
-                                  src={resident.validIdPath}
-                                  alt="Valid ID"
-                                  className={`h-56 w-full object-contain bg-slate-50 transition-all duration-300 ${
-                                    blurredInlineDocuments[`${resident.id}-validId`] !== false ? 'blur-xl' : 'blur-none'
-                                  }`}
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextElementSibling.style.display = 'flex';
-                                  }}
-                                />
-                                {blurredInlineDocuments[`${resident.id}-validId`] !== false && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
-                                    <button
-                                      onClick={() => setBlurredInlineDocuments(prev => ({ ...prev, [`${resident.id}-validId`]: false }))}
-                                      className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                      Click to View
-                                    </button>
-                                  </div>
-                                )}
-                                <div className="hidden h-56 w-full items-center justify-center bg-slate-50">
-                                  <div className="text-center">
-                                    <AlertCircle className="mx-auto h-8 w-8 text-red-400" />
-                                    <p className="mt-2 text-sm text-slate-500">Failed to load image</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex h-56 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
-                                <div className="text-center">
-                                  <FileCheck className="mx-auto h-8 w-8 text-slate-300" />
-                                  <p className="mt-2 text-sm font-medium text-slate-500">No document uploaded</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Proof of Residency */}
-                          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                            <div className="mb-3 flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-bold text-slate-950">Proof of Residency</p>
-                                <p className="mt-0.5 text-xs text-slate-500">Barangay clearance or utility bill</p>
-                              </div>
-                              {resident.proofOfResidencyPath && (
-                                <a
-                                  href={resident.proofOfResidencyPath}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                  Open
-                                </a>
-                              )}
-                            </div>
-                            
-                            {resident.proofOfResidencyPath ? (
-                              <div className="relative overflow-hidden rounded-lg border border-slate-200">
-                                <img
-                                  src={resident.proofOfResidencyPath}
-                                  alt="Proof of Residency"
-                                  className={`h-56 w-full object-contain bg-slate-50 transition-all duration-300 ${
-                                    blurredInlineDocuments[`${resident.id}-proofOfResidency`] !== false ? 'blur-xl' : 'blur-none'
-                                  }`}
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextElementSibling.style.display = 'flex';
-                                  }}
-                                />
-                                {blurredInlineDocuments[`${resident.id}-proofOfResidency`] !== false && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
-                                    <button
-                                      onClick={() => setBlurredInlineDocuments(prev => ({ ...prev, [`${resident.id}-proofOfResidency`]: false }))}
-                                      className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                      Click to View
-                                    </button>
-                                  </div>
-                                )}
-                                <div className="hidden h-56 w-full items-center justify-center bg-slate-50">
-                                  <div className="text-center">
-                                    <AlertCircle className="mx-auto h-8 w-8 text-red-400" />
-                                    <p className="mt-2 text-sm text-slate-500">Failed to load image</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex h-56 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
-                                <div className="text-center">
-                                  <FileCheck className="mx-auto h-8 w-8 text-slate-300" />
-                                  <p className="mt-2 text-sm font-medium text-slate-500">No document uploaded</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="mt-6 flex gap-3 border-t border-amber-100 pt-5">
-                        <button
-                          onClick={() => handleApproveResident(resident.id)}
-                          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700"
-                        >
-                          <CheckCircle2 className="h-5 w-5" />
-                          Approve Registration
-                        </button>
-                        <button
-                          onClick={() => handleRejectResident(resident.id)}
-                          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-rose-300 bg-rose-50 px-6 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
-                        >
-                          <X className="h-5 w-5" />
-                          Reject Registration
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                                  Review
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Verification Detail Sheet */}
+          {selectedVerification && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-sm">
+              <div className="relative w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-200 bg-white shadow-2xl">
+                {/* Header */}
+                <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-lg font-bold text-white">
+                      {residentInitials(selectedVerification)}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">{residentName(selectedVerification)}</h3>
+                      <p className="text-sm text-slate-500">@{selectedVerification.User?.username}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedVerification(null)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="max-h-[calc(90vh-200px)] sm:max-h-[calc(85vh-200px)] overflow-y-auto p-6 space-y-6">
+                  {/* Personal Info */}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Email</p>
+                      <p className="text-sm font-semibold text-slate-900">{selectedVerification.User?.email}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Birth Date</p>
+                      <p className="text-sm font-semibold text-slate-900">{formatDate(selectedVerification.birthDate)}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Gender</p>
+                      <p className="text-sm font-semibold text-slate-900">{selectedVerification.gender}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Contact</p>
+                      <p className="text-sm font-semibold text-slate-900">{selectedVerification.contactNumber}</p>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Full Address</p>
+                    <p className="text-sm font-semibold text-slate-900">{fullAddress(selectedVerification)}</p>
+                  </div>
+
+                  {/* Documents */}
+                  <div>
+                    <h4 className="text-sm font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
+                      <FileCheck className="h-5 w-5 text-blue-600" />
+                      Verification Documents
+                    </h4>
+                    
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      {/* Valid ID */}
+                      <div className="rounded-lg border border-slate-200 bg-white p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-bold text-slate-950">Valid ID</p>
+                            <p className="text-xs text-slate-500">Government-issued identification</p>
+                          </div>
+                          {selectedVerification.validIdPath && (
+                            <a
+                              href={selectedVerification.validIdPath}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Open
+                            </a>
+                          )}
+                        </div>
+                        
+                        {selectedVerification.validIdPath ? (
+                          <div className="relative mb-3">
+                            <img
+                              src={selectedVerification.validIdPath}
+                              alt="Valid ID"
+                              className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
+                                blurredDocuments[`${selectedVerification.id}-validId`] ? 'blur-xl' : 'blur-none'
+                              }`}
+                            />
+                            {blurredDocuments[`${selectedVerification.id}-validId`] && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20 rounded-xl">
+                                <button
+                                  onClick={() => setBlurredDocuments(prev => ({ ...prev, [`${selectedVerification.id}-validId`]: false }))}
+                                  className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Click to View
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
+                            <p className="text-sm text-slate-500">No document uploaded</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Proof of Residency */}
+                      <div className="rounded-lg border border-slate-200 bg-white p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-bold text-slate-950">Proof of Residency</p>
+                            <p className="text-xs text-slate-500">Barangay clearance or utility bill</p>
+                          </div>
+                          {selectedVerification.proofOfResidencyPath && (
+                            <a
+                              href={selectedVerification.proofOfResidencyPath}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Open
+                            </a>
+                          )}
+                        </div>
+                        
+                        {selectedVerification.proofOfResidencyPath ? (
+                          <div className="relative mb-3">
+                            <img
+                              src={selectedVerification.proofOfResidencyPath}
+                              alt="Proof of Residency"
+                              className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
+                                blurredDocuments[`${selectedVerification.id}-proofOfResidency`] ? 'blur-xl' : 'blur-none'
+                              }`}
+                            />
+                            {blurredDocuments[`${selectedVerification.id}-proofOfResidency`] && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20 rounded-xl">
+                                <button
+                                  onClick={() => setBlurredDocuments(prev => ({ ...prev, [`${selectedVerification.id}-proofOfResidency`]: false }))}
+                                  className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Click to View
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
+                            <p className="text-sm text-slate-500">No document uploaded</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="border-t border-slate-200 bg-white px-6 py-4 flex flex-col-reverse sm:flex-row gap-3 sticky bottom-0">
+                  <button
+                    onClick={() => {
+                      handleRejectResident(selectedVerification.id);
+                      setSelectedVerification(null);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-rose-300 bg-rose-50 px-6 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100"
+                  >
+                    <X className="h-5 w-5" />
+                    Reject Registration
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleApproveResident(selectedVerification.id);
+                      setSelectedVerification(null);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition hover:bg-emerald-700"
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                    Approve Registration
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
