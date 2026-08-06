@@ -213,4 +213,17 @@ export const logsAPI = {
   clearLog: (filename) => api.delete(`/logs/${filename}`),
 };
 
+// Analytics API
+export const analyticsAPI = {
+  getKPIs: () => api.get('/analytics/kpis'),
+  getRegistrationTrend: () => api.get('/analytics/registration-trend'),
+  getDocumentRequests: () => api.get('/analytics/document-requests'),
+  getRequestStatus: () => api.get('/analytics/request-status'),
+  getComplaints: () => api.get('/analytics/complaints'),
+  getDemographics: () => api.get('/analytics/demographics'),
+  getMonthlyActivity: () => api.get('/analytics/monthly-activity'),
+  getVerificationProgress: () => api.get('/analytics/verification-progress'),
+  getQuickStats: () => api.get('/analytics/quick-stats'),
+};
+
 export default api;

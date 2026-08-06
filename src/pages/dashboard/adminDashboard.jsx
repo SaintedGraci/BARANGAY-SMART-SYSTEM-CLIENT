@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { requestsAPI, residentsAPI, announcementsAPI, logsAPI, complaintsAPI } from '../../services/api';
+import AnalyticsTab from './AnalyticsTab';
 import bakilidLogo from '../../assets/bakilidlogo.png';
 
 const STATUS_OPTIONS = ['Pending', 'Processing', 'Ready for Release', 'Claimed', 'Rejected'];
@@ -276,10 +277,10 @@ export default function AdminDashboard() {
   
   // RBAC: Define role permissions
   const rolePermissions = {
-    captain: ['overview', 'residents', 'requests', 'complaints', 'announcements', 'reports'],
-    secretary: ['overview', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'reports'],
+    captain: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'announcements'],
+    secretary: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements'],
     staff: ['overview', 'residents', 'requests', 'complaints', 'verifications'],
-    admin: ['overview', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'reports', 'logs']
+    admin: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'logs']
   };
   
   // Get user's allowed tabs based on role
@@ -774,6 +775,7 @@ export default function AdminDashboard() {
 
   const allMenuItems = [
     { id: 'overview', name: 'Overview', icon: LayoutDashboard },
+    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
     { id: 'requests', name: 'All Requests', icon: FileText },
     { id: 'complaints', name: 'Complaints', icon: AlertCircle, badge: complaints.filter(c => c.status === 'Pending').length },
     { id: 'residents', name: 'Residents', icon: Users },
@@ -785,7 +787,6 @@ export default function AdminDashboard() {
     },
     { id: 'announcements', name: 'Announcements', icon: Megaphone },
     { id: 'logs', name: 'System Logs', icon: Activity },
-    { id: 'reports', name: 'Reports', icon: BarChart3 },
   ];
   
   // Filter menu items based on user role permissions
@@ -2073,6 +2074,8 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {activeTab === 'analytics' && <AnalyticsTab />}
 
           {activeTab === 'reports' && (
             <div className="space-y-6">
