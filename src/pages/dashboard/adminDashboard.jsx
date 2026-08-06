@@ -861,13 +861,6 @@ export default function AdminDashboard() {
       onClick: openCreateAnnouncementModal,
       className: 'bg-white text-slate-900 hover:bg-slate-50 border border-slate-200',
     },
-    {
-      title: 'Add Resident',
-      description: 'Create a resident account and profile.',
-      icon: UserPlus,
-      onClick: () => setShowCreateResidentModal(true),
-      className: 'bg-white text-slate-900 hover:bg-slate-50 border border-slate-200',
-    },
   ];
 
   if (loading) {
@@ -1448,13 +1441,6 @@ export default function AdminDashboard() {
                     <h3 className="text-lg font-bold text-slate-950">Registered Residents</h3>
                     <p className="mt-1 text-sm text-slate-500">{filteredResidents.length} residents found</p>
                   </div>
-                  <button
-                    onClick={() => setShowCreateResidentModal(true)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Resident
-                  </button>
                 </div>
 
                 <div className="overflow-x-auto">
