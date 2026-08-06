@@ -39,6 +39,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { requestsAPI, residentsAPI, announcementsAPI, logsAPI, complaintsAPI } from '../../services/api';
 import AnalyticsTab from './AnalyticsTab';
+import UserManagementTab from './UserManagementTab';
 import bakilidLogo from '../../assets/bakilidlogo.png';
 
 const STATUS_OPTIONS = ['Pending', 'Processing', 'Ready for Release', 'Claimed', 'Rejected'];
@@ -280,7 +281,7 @@ export default function AdminDashboard() {
     captain: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'announcements'],
     secretary: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements'],
     staff: ['overview', 'residents', 'requests', 'complaints', 'verifications'],
-    admin: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'logs']
+    admin: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'logs', 'users']
   };
   
   // Get user's allowed tabs based on role
@@ -787,6 +788,7 @@ export default function AdminDashboard() {
     },
     { id: 'announcements', name: 'Announcements', icon: Megaphone },
     { id: 'logs', name: 'System Logs', icon: Activity },
+    { id: 'users', name: 'User Management', icon: Users },
   ];
   
   // Filter menu items based on user role permissions
@@ -2076,6 +2078,8 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === 'analytics' && <AnalyticsTab />}
+
+          {activeTab === 'users' && <UserManagementTab />}
 
           {activeTab === 'reports' && (
             <div className="space-y-6">

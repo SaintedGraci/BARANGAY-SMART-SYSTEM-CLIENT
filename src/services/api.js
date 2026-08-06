@@ -226,4 +226,14 @@ export const analyticsAPI = {
   getQuickStats: () => api.get('/analytics/quick-stats'),
 };
 
+// User Management API (Admin only)
+export const userManagementAPI = {
+  getAll: (params) => api.get('/admin/users', { params }),
+  create: (data) => api.post('/admin/users', data),
+  update: (id, data) => api.put(`/admin/users/${id}`, data),
+  delete: (id) => api.delete(`/admin/users/${id}`),
+  updateStatus: (id, status) => api.patch(`/admin/users/${id}/status`, { status }),
+  resetPassword: (id, newPassword) => api.patch(`/admin/users/${id}/reset-password`, { newPassword }),
+};
+
 export default api;
