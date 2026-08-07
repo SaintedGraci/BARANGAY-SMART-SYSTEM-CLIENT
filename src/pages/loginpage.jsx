@@ -6,7 +6,7 @@ import bakilidLogo from "../assets/bakilidlogo.png";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,9 +33,7 @@ export default function LoginPage() {
           setError(
             "This login is for residents only. Please use the admin login."
           );
-          localStorage.removeItem("token");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
+          await logout(); // Properly clear auth state
           setIsLoading(false);
         }
       } else {

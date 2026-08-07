@@ -6,7 +6,7 @@ import bakilidLogo from "../assets/bakilidlogo.png";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -30,9 +30,7 @@ export default function AdminLogin() {
           navigate("/admin/dashboard");
         } else {
           setError("Access denied. Admin credentials required.");
-          localStorage.removeItem("token");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
+          await logout(); // Properly clear auth state
           setIsLoading(false);
         }
       } else {
