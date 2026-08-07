@@ -20,23 +20,29 @@ export default function AdminLogin() {
     setError("");
     setIsLoading(true);
 
-    const result = await login(formData.email, formData.password);
+    try {
+      const result = await login(formData.email, formData.password);
 
-    if (result.success) {
-      const userData = JSON.parse(localStorage.getItem("user"));
+      if (result.success) {
+        const userData = JSON.parse(localStorage.getItem("user"));
 
-      if (userData && ["admin", "staff", "secretary", "captain"].includes(userData.role)) {
-        navigate("/admin/dashboard");
+        if (userData && ["admin", "staff", "secretary", "captain"].includes(userData.role)) {
+          navigate("/admin/dashboard");
+        } else {
+          setError("Access denied. Admin credentials required.");
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          setIsLoading(false);
+        }
       } else {
-        setError("Access denied. Admin credentials required.");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        setError(result.message || "Invalid email or password");
+        setIsLoading(false);
       }
-    } else {
-      setError(result.message);
+    } catch (err) {
+      setError("An error occurred during login. Please try again.");
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

@@ -21,25 +21,31 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
-    const result = await login(formData.username, formData.password);
+    try {
+      const result = await login(formData.username, formData.password);
 
-    if (result.success) {
-      const userData = JSON.parse(localStorage.getItem("user"));
+      if (result.success) {
+        const userData = JSON.parse(localStorage.getItem("user"));
 
-      if (userData && userData.role === "resident") {
-        navigate("/dashboard");
+        if (userData && userData.role === "resident") {
+          navigate("/dashboard");
+        } else {
+          setError(
+            "This login is for residents only. Please use the admin login."
+          );
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          setIsLoading(false);
+        }
       } else {
-        setError(
-          "This login is for residents only. Please use the admin login."
-        );
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        setError(result.message || "Invalid username or password");
+        setIsLoading(false);
       }
-    } else {
-      setError(result.message);
+    } catch (err) {
+      setError("An error occurred during login. Please try again.");
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
