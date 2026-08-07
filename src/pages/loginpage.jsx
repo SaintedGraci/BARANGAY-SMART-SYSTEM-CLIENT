@@ -138,6 +138,7 @@ export default function LoginPage() {
                   className="w-full rounded-xl border border-slate-800/80 bg-slate-900/60 py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none shadow-sm shadow-slate-950/40 transition-all focus:border-sky-500/60 focus:bg-slate-950/80 focus:ring-4 focus:ring-sky-500/15 disabled:cursor-not-allowed disabled:opacity-70"
                 />
               </div>
+              <p className="text-xs text-slate-500 ml-1">Use your resident username (not email)</p>
             </div>
 
             {/* Password */}

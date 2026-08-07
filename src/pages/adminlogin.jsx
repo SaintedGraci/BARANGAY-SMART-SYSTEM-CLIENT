@@ -163,7 +163,7 @@ export default function AdminLogin() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 ml-1">Email Address</label>
+              <label className="block text-sm font-semibold text-gray-700 ml-1">Admin Email Address</label>
               <div className="relative group">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition duration-300"></div>
                 <div className="relative">
@@ -181,6 +181,7 @@ export default function AdminLogin() {
                   />
                 </div>
               </div>
+              <p className="text-xs text-gray-500 ml-1">Use your official admin email address</p>
             </div>
 
             {/* Password */}
