@@ -123,13 +123,18 @@ api.interceptors.response.use(
     }
 
     // For other 401 errors or if token is revoked/invalid, redirect to login
+    // BUT: Don't redirect if this is already a login attempt (to allow error messages to display)
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      // Preserve admin login path
-      const isAdminPath = window.location.pathname.includes('/admin');
-      window.location.href = isAdminPath ? '/admin/login' : '/login';
+      const isLoginRequest = originalRequest.url?.includes('/auth/login');
+      
+      if (!isLoginRequest) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        // Preserve admin login path
+        const isAdminPath = window.location.pathname.includes('/admin');
+        window.location.href = isAdminPath ? '/admin/login' : '/login';
+      }
     }
 
     return Promise.reject(error);
