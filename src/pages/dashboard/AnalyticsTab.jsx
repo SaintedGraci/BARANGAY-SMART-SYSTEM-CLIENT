@@ -16,43 +16,58 @@ import {
 import Chart from 'react-apexcharts';
 import api from '../../services/api';
 
-// KPI Card Component
-function KPICard({ label, value, icon: Icon, trend, trendValue, className = 'bg-blue-50 text-blue-700' }) {
+// KPI Card Component with Modern Design
+function KPICard({ label, value, icon: Icon, trend, trendValue, className = 'bg-blue-50 text-blue-700', subtitle }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{value?.toLocaleString() || 0}</p>
-          {trend && (
-            <p className={`mt-2 flex items-center gap-1 text-sm font-medium ${trend === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
-              <TrendingUp className={`h-4 w-4 ${trend === 'down' ? 'rotate-180' : ''}`} />
-              {trendValue}
-            </p>
+    <div className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-lg hover:border-blue-200">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p>
+          <p className="mt-3 text-4xl font-bold tracking-tight text-slate-900">{value?.toLocaleString() || '0'}</p>
+          {subtitle && (
+            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+          )}
+          {trend && trendValue && (
+            <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              trend === 'up' 
+                ? 'bg-emerald-50 text-emerald-700' 
+                : trend === 'down'
+                ? 'bg-rose-50 text-rose-700'
+                : 'bg-slate-50 text-slate-700'
+            }`}>
+              <TrendingUp className={`h-3.5 w-3.5 ${trend === 'down' ? 'rotate-180' : trend === 'neutral' ? 'rotate-90' : ''}`} />
+              <span>{trendValue}</span>
+            </div>
           )}
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${className}`}>
-          <Icon className="h-6 w-6" />
+        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-110 ${className}`}>
+          <Icon className="h-7 w-7" />
         </div>
       </div>
     </div>
   );
 }
 
-// Chart Card Wrapper
-function ChartCard({ title, description, children, loading }) {
+// Chart Card Wrapper with Modern Design
+function ChartCard({ title, description, children, loading, action }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4">
-        <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-        {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h3 className="text-lg font-bold tracking-tight text-slate-900">{title}</h3>
+          {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+        </div>
+        {action && <div>{action}</div>}
       </div>
       {loading ? (
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-600" />
+            <p className="mt-3 text-sm font-medium text-slate-500">Loading chart data...</p>
+          </div>
         </div>
       ) : (
-        children
+        <div className="relative">{children}</div>
       )}
     </div>
   );
