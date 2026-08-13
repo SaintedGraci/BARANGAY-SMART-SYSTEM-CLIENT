@@ -40,6 +40,7 @@ import { useAuth } from '../../context/AuthContext';
 import { requestsAPI, residentsAPI, announcementsAPI, logsAPI, complaintsAPI } from '../../services/api';
 import AnalyticsTab from './AnalyticsTab';
 import UserManagementTab from './UserManagementTab';
+import AdminLayout from '../../layouts/AdminLayout';
 import bakilidLogo from '../../assets/bakilidlogo.png';
 
 const STATUS_OPTIONS = ['Pending', 'Processing', 'Ready for Release', 'Claimed', 'Rejected'];
@@ -304,7 +305,6 @@ export default function AdminDashboard() {
   const [requests, setRequests] = useState([]);
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedResident, setSelectedResident] = useState(null);
@@ -877,144 +877,20 @@ export default function AdminDashboard() {
     );
   }
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      {isSidebarOpen && (
-        <button
-          className="fixed inset-0 z-40 bg-slate-950/10 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-          aria-label="Close sidebar"
-        />
-      )}
-
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-300 lg:static ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:w-20'
-        }`}
-      >
-        <div className="flex h-20 items-center justify-between border-b border-slate-100 px-5">
-          {isSidebarOpen && (
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-                <img src={bakilidLogo} alt="Bakilid Logo" className="h-full w-full object-contain" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="truncate text-sm font-bold text-slate-950">Barangay Bakilid</h1>
-                <p className="text-xs font-medium text-blue-700">Admin Portal</p>
-              </div>
-            </div>
-          )}
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => changeTab(item.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/10'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
-                }`}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {isSidebarOpen && (
-                  <>
-                    <span className="flex-1 text-left">{item.name}</span>
-                    {item.badge > 0 && (
-                      <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs font-bold text-white">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="border-t border-slate-100 p-4">
-          <div className={`flex items-center gap-3 ${!isSidebarOpen && 'justify-center'}`}>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-bold text-white shadow-sm">
-              {user?.username?.charAt(0).toUpperCase()}
-            </div>
-            {isSidebarOpen && (
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-slate-950">{user?.username}</p>
-                <p className="text-xs font-medium text-slate-500 capitalize">{user?.role}</p>
-              </div>
-            )}
-          </div>
-          {isSidebarOpen && (
-            <button
-              onClick={() => {
-                logout();
-                navigate('/');
-              }}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </button>
-          )}
-        </div>
-      </aside>
-
-      <main className="flex-1 min-w-0 overflow-auto">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95">
-          <div className="flex flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Admin Console
-                </div>
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                  userRole === 'admin' ? 'bg-purple-100 text-purple-700' :
-                  userRole === 'captain' ? 'bg-blue-100 text-blue-700' :
-                  userRole === 'secretary' ? 'bg-green-100 text-green-700' :
-                  'bg-slate-100 text-slate-700'
-                }`}>
-                  {userRole === 'admin' ? '🔧 System Admin' :
-                   userRole === 'captain' ? '🏛️ Captain' :
-                   userRole === 'secretary' ? '📋 Secretary' :
-                   '👥 Staff'}
-                </span>
-              </div>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-                {activeMenuItem?.name || 'Dashboard'}
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">{TAB_DESCRIPTIONS[activeTab]}</p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Last updated</p>
-                <p className="text-sm font-bold text-slate-950">{lastUpdated}</p>
-              </div>
-              <button
-                onClick={fetchData}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-5 sm:p-6 lg:p-8">
+    <AdminLayout
+      activeTab={activeTab}
+      onTabChange={changeTab}
+      menuItems={menuItems}
+      user={user}
+      onLogout={handleLogout}
+      onRefresh={fetchData}
+    >
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -2124,8 +2000,6 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-        </div>
-      </main>
 
       <Modal
         isOpen={showAnnouncementModal}
@@ -3037,6 +2911,6 @@ export default function AdminDashboard() {
           </div>
         )}
       </Modal>
-    </div>
+    </AdminLayout>
   );
 }
