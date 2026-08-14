@@ -14,7 +14,7 @@ const STATUSES = [
   { value: 'Inactive', label: 'Save as Draft' },
 ];
 
-export default function AnnouncementModal({ isOpen, onClose, onSave, announcement, saving }) {
+export default function AnnouncementModal({ isOpen, onClose, onSave, announcement, saving, error }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -189,6 +189,26 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* Server Error Display */}
+          {error && (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-rose-900 mb-1">
+                    Failed to save announcement
+                  </h4>
+                  <p className="text-sm text-rose-700">
+                    {error}
+                  </p>
+                  <p className="text-xs text-rose-600 mt-2">
+                    Check browser console (F12) for detailed error information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Title */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">

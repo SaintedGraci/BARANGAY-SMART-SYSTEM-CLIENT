@@ -333,6 +333,7 @@ export default function AdminDashboard() {
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
   const [savingAnnouncement, setSavingAnnouncement] = useState(false);
+  const [announcementError, setAnnouncementError] = useState(null);
   const [announcementForm, setAnnouncementForm] = useState({
     title: '',
     description: '',
@@ -601,6 +602,7 @@ export default function AdminDashboard() {
 
   const openCreateAnnouncementModal = () => {
     setEditingAnnouncement(null);
+    setAnnouncementError(null);
     setAnnouncementForm({
       title: '',
       description: '',
@@ -613,6 +615,7 @@ export default function AdminDashboard() {
 
   const openEditAnnouncementModal = (announcement) => {
     setEditingAnnouncement(announcement);
+    setAnnouncementError(null);
     setAnnouncementForm({
       title: announcement.title,
       description: announcement.description,
@@ -634,27 +637,30 @@ export default function AdminDashboard() {
 
   const handleSaveAnnouncement = async (formData) => {
     setSavingAnnouncement(true);
+    setAnnouncementError(null); // Clear previous errors
 
     try {
       if (editingAnnouncement) {
         await announcementsAPI.update(editingAnnouncement.id, formData);
-        alert('Announcement updated successfully!');
       } else {
         await announcementsAPI.create(formData);
-        alert('Announcement published successfully!');
       }
 
       setShowAnnouncementModal(false);
       setEditingAnnouncement(null);
       fetchAnnouncements();
     } catch (error) {
-      console.error('Error saving announcement:', error);
+      console.error('❌ Error saving announcement:', error);
       console.error('Error response:', error.response);
       console.error('Error data:', error.response?.data);
+      console.error('Error message:', error.message);
+      console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
       
-      // Don't close modal on error
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to save announcement';
-      alert(`Error: ${errorMessage}\n\nCheck console for details.`);
+      // Set error message to display in modal
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      setAnnouncementError(errorMessage);
+      
+      // Don't close modal on error - keep it open so user can see the error
     } finally {
       setSavingAnnouncement(false);
     }
@@ -1747,10 +1753,12 @@ export default function AdminDashboard() {
             onClose={() => {
               setShowAnnouncementModal(false);
               setEditingAnnouncement(null);
+              setAnnouncementError(null); // Clear error when closing
             }}
             onSave={handleSaveAnnouncement}
             announcement={editingAnnouncement}
             saving={savingAnnouncement}
+            error={announcementError}
           />
 
           {activeTab === 'logs' && (
