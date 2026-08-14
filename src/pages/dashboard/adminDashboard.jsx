@@ -43,7 +43,6 @@ import UserManagementTab from './UserManagementTab';
 import AdminLayout from '../../layouts/AdminLayout';
 import bakilidLogo from '../../assets/bakilidlogo.png';
 import AnnouncementFeed from '../../components/AnnouncementFeed';
-import AnnouncementModal from '../../components/AnnouncementModal';
 
 const STATUS_OPTIONS = ['Pending', 'Processing', 'Ready for Release', 'Claimed', 'Rejected'];
 
@@ -635,32 +634,69 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSaveAnnouncement = async (formData) => {
+  const [announcementForm, setAnnouncementForm] = useState({
+    title: '',
+    description: '',
+    status: 'Active',
+    priority: 'Medium',
+    image: null,
+  });
+
+  const handleAnnouncementFormChange = (event) => {
+    const { name, value, files } = event.target;
+    if (name === 'image') {
+      setAnnouncementForm((previous) => ({ ...previous, [name]: files[0] }));
+    } else {
+      setAnnouncementForm((previous) => ({ ...previous, [name]: value }));
+    }
+  };
+
+  const handleSaveAnnouncement = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     setSavingAnnouncement(true);
-    setAnnouncementError(null); // Clear previous errors
+    setAnnouncementError(null);
 
     try {
+      const formData = new FormData();
+      formData.append('title', announcementForm.title);
+      formData.append('description', announcementForm.description);
+      formData.append('status', announcementForm.status);
+      formData.append('priority', announcementForm.priority);
+      
+      if (announcementForm.image) {
+        formData.append('image', announcementForm.image);
+      }
+
       if (editingAnnouncement) {
-        await announcementsAPI.update(editingAnnouncement.id, formData);
+        const response = await announcementsAPI.update(editingAnnouncement.id, formData);
+        console.log('✅ Update response:', response);
       } else {
-        await announcementsAPI.create(formData);
+        const response = await announcementsAPI.create(formData);
+        console.log('✅ Create response:', response);
       }
 
       setShowAnnouncementModal(false);
       setEditingAnnouncement(null);
+      setAnnouncementForm({
+        title: '',
+        description: '',
+        status: 'Active',
+        priority: 'Medium',
+        image: null,
+      });
       fetchAnnouncements();
     } catch (error) {
       console.error('❌ Error saving announcement:', error);
       console.error('Error response:', error.response);
       console.error('Error data:', error.response?.data);
       console.error('Error message:', error.message);
-      console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
       
-      // Set error message to display in modal
       const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
       setAnnouncementError(errorMessage);
       
-      // Don't close modal on error - keep it open so user can see the error
+      // Show error but don't close modal
     } finally {
       setSavingAnnouncement(false);
     }
@@ -1748,19 +1784,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          <AnnouncementModal
-            isOpen={showAnnouncementModal}
-            onClose={() => {
-              setShowAnnouncementModal(false);
-              setEditingAnnouncement(null);
-              setAnnouncementError(null); // Clear error when closing
-            }}
-            onSave={handleSaveAnnouncement}
-            announcement={editingAnnouncement}
-            saving={savingAnnouncement}
-            error={announcementError}
-          />
-
           {activeTab === 'logs' && (
             <div className="space-y-6">
               {logStats && (
@@ -1976,6 +1999,25 @@ export default function AdminDashboard() {
         maxWidth="max-w-2xl"
       >
         <form onSubmit={handleSaveAnnouncement} className="space-y-5">
+          {announcementError && (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-rose-900 mb-1">
+                    Failed to save announcement
+                  </h4>
+                  <p className="text-sm text-rose-700">
+                    {announcementError}
+                  </p>
+                  <p className="text-xs text-rose-600 mt-2">
+                    Check browser console (F12) for detailed error information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div>
             <FieldLabel>Title</FieldLabel>
             <FieldInput
