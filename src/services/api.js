@@ -167,11 +167,25 @@ export const announcementsAPI = {
   getAll: () => api.get('/announcements'),
   getById: (id) => api.get(`/announcements/${id}`),
   create: (data) => {
-    // Don't set Content-Type for FormData - let browser/axios handle it
+    // For FormData, remove the default Content-Type header
+    if (data instanceof FormData) {
+      return api.post('/announcements', data, {
+        headers: {
+          'Content-Type': undefined
+        }
+      });
+    }
     return api.post('/announcements', data);
   },
   update: (id, data) => {
-    // Don't set Content-Type for FormData - let browser/axios handle it
+    // For FormData, remove the default Content-Type header
+    if (data instanceof FormData) {
+      return api.put(`/announcements/${id}`, data, {
+        headers: {
+          'Content-Type': undefined
+        }
+      });
+    }
     return api.put(`/announcements/${id}`, data);
   },
   delete: (id) => api.delete(`/announcements/${id}`),
