@@ -167,14 +167,12 @@ export const announcementsAPI = {
   getAll: () => api.get('/announcements'),
   getById: (id) => api.get(`/announcements/${id}`),
   create: (data) => {
-    // If data is FormData, let browser set Content-Type with boundary
-    const config = data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
-    return api.post('/announcements', data, config);
+    // Don't set Content-Type for FormData - let browser/axios handle it
+    return api.post('/announcements', data);
   },
   update: (id, data) => {
-    // If data is FormData, let browser set Content-Type with boundary
-    const config = data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
-    return api.put(`/announcements/${id}`, data, config);
+    // Don't set Content-Type for FormData - let browser/axios handle it
+    return api.put(`/announcements/${id}`, data);
   },
   delete: (id) => api.delete(`/announcements/${id}`),
   togglePin: (id) => api.patch(`/announcements/${id}/pin`),
