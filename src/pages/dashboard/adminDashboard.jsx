@@ -649,7 +649,12 @@ export default function AdminDashboard() {
       fetchAnnouncements();
     } catch (error) {
       console.error('Error saving announcement:', error);
-      alert(error.response?.data?.message || 'Failed to save announcement');
+      console.error('Error response:', error.response);
+      console.error('Error data:', error.response?.data);
+      
+      // Don't close modal on error
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to save announcement';
+      alert(`Error: ${errorMessage}\n\nCheck console for details.`);
     } finally {
       setSavingAnnouncement(false);
     }
