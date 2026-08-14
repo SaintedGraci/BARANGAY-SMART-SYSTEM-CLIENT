@@ -848,33 +848,70 @@ export default function Dashboard() {
                 <p className="text-gray-500 text-center py-12">No announcements available</p>
               ) : (
                 <div className="space-y-4">
-                  {announcements.map((announcement) => (
-                    <div key={announcement.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                  {announcements
+                    .sort((a, b) => {
+                      // Sort: pinned first, then by date
+                      if (a.isPinned && !b.isPinned) return -1;
+                      if (!a.isPinned && b.isPinned) return 1;
+                      return new Date(b.createdAt) - new Date(a.createdAt);
+                    })
+                    .map((announcement) => (
+                    <div key={announcement.id} className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white">
+                      <div className="p-5">
+                        <div className="flex items-start gap-3 mb-4">
+                          <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg flex-shrink-0">
+                            BB
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-900 text-sm">Barangay Bakilid</h4>
+                            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                                <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                                Official Announcement
+                              </span>
+                              <span className="text-xs text-slate-500">·</span>
+                              <span className="text-xs text-slate-500">{new Date(announcement.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {announcement.isPinned && (
+                          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 mb-2">
+                            <svg className="w-3.5 h-3.5 fill-blue-700" viewBox="0 0 24 24"><path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z" /></svg>
+                            Pinned
+                          </div>
+                        )}
+
+                        <h3 className="font-bold text-gray-900 text-lg mb-2">{announcement.title}</h3>
+                        <p className="text-gray-700 mb-3 whitespace-pre-wrap leading-relaxed">{announcement.description}</p>
+                      </div>
+
                       {announcement.imagePath && (
                         <img 
                           src={announcement.imagePath} 
                           alt={announcement.title}
-                          className="w-full h-64 object-cover"
+                          className="w-full max-h-[600px] object-cover bg-slate-50"
                           onError={(e) => {
                             console.error('Image failed to load:', announcement.imagePath);
                             e.target.style.display = 'none';
                           }}
                         />
                       )}
-                      <div className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+
+                      <div className="border-t border-slate-200 px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                             </svg>
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-gray-900 text-lg mb-2">{announcement.title}</h3>
-                            <p className="text-gray-600 mb-3">{announcement.description}</p>
-                            <p className="text-xs text-gray-400">
-                              Posted: {new Date(announcement.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
+                            <span className="hidden sm:inline">Helpful</span>
+                          </button>
+                          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <span className="hidden sm:inline">Comment</span>
+                          </button>
                         </div>
                       </div>
                     </div>

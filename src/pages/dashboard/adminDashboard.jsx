@@ -42,6 +42,8 @@ import AnalyticsTab from './AnalyticsTab';
 import UserManagementTab from './UserManagementTab';
 import AdminLayout from '../../layouts/AdminLayout';
 import bakilidLogo from '../../assets/bakilidlogo.png';
+import AnnouncementFeed from '../../components/AnnouncementFeed';
+import AnnouncementModal from '../../components/AnnouncementModal';
 
 const STATUS_OPTIONS = ['Pending', 'Processing', 'Ready for Release', 'Claimed', 'Rejected'];
 
@@ -630,22 +632,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSaveAnnouncement = async (event) => {
-    event.preventDefault();
+  const handleSaveAnnouncement = async (formData) => {
     setSavingAnnouncement(true);
 
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('title', announcementForm.title);
-      formData.append('description', announcementForm.description);
-      formData.append('status', announcementForm.status);
-      formData.append('priority', announcementForm.priority);
-      
-      if (announcementForm.image) {
-        formData.append('image', announcementForm.image);
-      }
-
       if (editingAnnouncement) {
         await announcementsAPI.update(editingAnnouncement.id, formData);
         alert('Announcement updated successfully!');
@@ -665,18 +655,43 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteAnnouncement = async (id) => {
+  const handleDeleteAnnouncement = async (announcement) => {
     if (!window.confirm('Delete this announcement? Residents will no longer see it.')) {
       return;
     }
 
     try {
-      await announcementsAPI.delete(id);
+      await announcementsAPI.delete(announcement.id);
       alert('Announcement deleted successfully!');
       fetchAnnouncements();
     } catch (error) {
       console.error('Error deleting announcement:', error);
       alert(error.response?.data?.message || 'Failed to delete announcement');
+    }
+  };
+
+  const handlePinAnnouncement = async (announcement) => {
+    try {
+      await announcementsAPI.togglePin(announcement.id);
+      fetchAnnouncements();
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      alert(error.response?.data?.message || 'Failed to toggle pin');
+    }
+  };
+
+  const handleArchiveAnnouncement = async (announcement) => {
+    if (!window.confirm('Archive this announcement? It will be moved to the archived section.')) {
+      return;
+    }
+
+    try {
+      await announcementsAPI.archive(announcement.id);
+      alert('Announcement archived successfully!');
+      fetchAnnouncements();
+    } catch (error) {
+      console.error('Error archiving announcement:', error);
+      alert(error.response?.data?.message || 'Failed to archive announcement');
     }
   };
 
@@ -1708,92 +1723,30 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === 'announcements' && (
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-950">Barangay Announcements</h3>
-                    <p className="mt-1 text-sm text-slate-500">Publish updates residents can see on their dashboard.</p>
-                  </div>
-                  <button
-                    onClick={openCreateAnnouncementModal}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700"
-                  >
-                    <Plus className="h-4 w-4" />
-                    New Announcement
-                  </button>
-                </div>
-              </div>
-
-              {announcements.length === 0 ? (
-                <EmptyState
-                  icon={Megaphone}
-                  title="No announcements yet"
-                  description="Create an announcement to notify residents about barangay updates."
-                  action={
-                    <button
-                      onClick={openCreateAnnouncementModal}
-                      className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-                    >
-                      Create Announcement
-                    </button>
-                  }
-                />
-              ) : (
-                <div className="grid gap-4">
-                  {announcements.map((announcement) => (
-                    <div key={announcement.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                      {announcement.imagePath && (
-                        <img 
-                          src={announcement.imagePath} 
-                          alt={announcement.title}
-                          className="w-full h-48 object-cover"
-                          onError={(e) => {
-                            console.error('Image failed to load:', announcement.imagePath);
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <div className="p-5">
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h4 className="text-lg font-bold text-slate-950">{announcement.title}</h4>
-                              <Badge className={getAnnouncementStatusBadgeClass(announcement.status)}>
-                                {announcement.status}
-                              </Badge>
-                              <Badge className={getPriorityBadgeClass(announcement.priority)}>{announcement.priority}</Badge>
-                            </div>
-                            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{announcement.description}</p>
-                            {announcement.imagePath && (
-                              <p className="mt-2 text-xs text-slate-400">📷 Image: {announcement.imagePath}</p>
-                            )}
-                            <p className="mt-3 text-xs font-medium text-slate-400">Posted: {formatDateTime(announcement.createdAt)}</p>
-                          </div>
-                          <div className="flex gap-2 sm:flex-none">
-                            <button
-                              onClick={() => openEditAnnouncementModal(announcement)}
-                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAnnouncement(announcement.id)}
-                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div>
+              <AnnouncementFeed
+                announcements={announcements}
+                loading={false}
+                userRole={userRole}
+                onCreateNew={openCreateAnnouncementModal}
+                onEdit={openEditAnnouncementModal}
+                onDelete={handleDeleteAnnouncement}
+                onPin={handlePinAnnouncement}
+                onArchive={handleArchiveAnnouncement}
+              />
             </div>
           )}
+
+          <AnnouncementModal
+            isOpen={showAnnouncementModal}
+            onClose={() => {
+              setShowAnnouncementModal(false);
+              setEditingAnnouncement(null);
+            }}
+            onSave={handleSaveAnnouncement}
+            announcement={editingAnnouncement}
+            saving={savingAnnouncement}
+          />
 
           {activeTab === 'logs' && (
             <div className="space-y-6">

@@ -177,6 +177,8 @@ export const announcementsAPI = {
     return api.put(`/announcements/${id}`, data, config);
   },
   delete: (id) => api.delete(`/announcements/${id}`),
+  togglePin: (id) => api.patch(`/announcements/${id}/pin`),
+  archive: (id) => api.patch(`/announcements/${id}/archive`),
 };
 
 // Complaints API
