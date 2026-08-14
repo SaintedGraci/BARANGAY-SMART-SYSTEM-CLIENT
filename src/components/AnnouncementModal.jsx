@@ -168,7 +168,15 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+      onClick={(e) => {
+        // Only close if clicking the backdrop, not the modal content
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div 
         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -179,6 +187,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
             {isEditing ? 'Edit Announcement' : 'Create Announcement'}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             disabled={saving}
@@ -391,6 +400,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={saving}
             className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
