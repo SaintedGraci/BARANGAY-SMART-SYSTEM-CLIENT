@@ -28,12 +28,15 @@ import {
   MessageSquare,
   XCircle,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { requestsAPI, announcementsAPI, complaintsAPI } from '../services/api';
 import { Button } from '../components/ui/button';
 import { DocumentListModal } from '../components/ui/documentlistmodal';
+import DateTimeWidget from '../components/DateTimeWidget';
+import WeatherWidget from '../components/WeatherWidget';
 import bakilidLogo from '../assets/bakilidlogo.png';
 
 function DashboardModal({ isOpen, onClose, title, subtitle, icon: Icon, children, maxWidth = 'max-w-md' }) {
@@ -465,7 +468,7 @@ export default function Dashboard() {
           </nav>
 
           <div className="border-t border-slate-200/70 p-3 sm:p-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
               <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-xs sm:text-sm font-bold text-white">
                 {user?.username?.charAt(0).toUpperCase()}
               </div>
@@ -476,7 +479,7 @@ export default function Dashboard() {
             </div>
             <button
               onClick={handleLogout}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-xs sm:text-sm font-medium text-red-600 transition-colors hover:bg-red-100 touch-manipulation min-h-[44px]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-xs sm:text-sm font-medium text-red-600 transition-colors hover:bg-red-100 touch-manipulation min-h-[44px]"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -496,7 +499,7 @@ export default function Dashboard() {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 truncate">
                   {menuItems.find((item) => item.id === activeTab)?.name}
                 </h1>
@@ -511,40 +514,52 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative rounded-xl p-2 sm:p-2.5 text-slate-600 transition-colors hover:bg-slate-100 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
-              >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute right-0.5 top-0.5 sm:right-1 sm:top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-[10px] sm:text-xs font-bold text-white">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Date/Time Widget - Hidden on mobile */}
+              <div className="hidden lg:block">
+                <DateTimeWidget />
+              </div>
 
-              {/* Notification Dropdown */}
-              {showNotifications && (
-                <div className="fixed inset-x-0 top-[60px] sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 bg-white rounded-none sm:rounded-lg shadow-xl border-t sm:border border-slate-200 max-h-[calc(100vh-60px)] sm:max-h-96 overflow-y-auto z-50">
-                  <div className="p-3 sm:p-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white">
-                    <h3 className="font-bold text-slate-900 text-sm sm:text-base">Notifications</h3>
-                    <div className="flex items-center gap-2">
-                      {unreadCount > 0 && (
+              {/* Weather Widget - Hidden on mobile and small tablets */}
+              <div className="hidden xl:block">
+                <WeatherWidget />
+              </div>
+
+              {/* Notifications */}
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative rounded-xl p-2 sm:p-2.5 text-slate-600 transition-colors hover:bg-slate-100 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute right-0.5 top-0.5 sm:right-1 sm:top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-[10px] sm:text-xs font-bold text-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notification Dropdown */}
+                {showNotifications && (
+                  <div className="fixed inset-x-0 top-[60px] sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 bg-white rounded-none sm:rounded-lg shadow-xl border-t sm:border border-slate-200 max-h-[calc(100vh-60px)] sm:max-h-96 overflow-y-auto z-50">
+                    <div className="p-3 sm:p-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white">
+                      <h3 className="font-bold text-slate-900 text-sm sm:text-base">Notifications</h3>
+                      <div className="flex items-center gap-2">
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={markAllAsRead}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium touch-manipulation py-2 px-3"
+                          >
+                            Mark all read
+                          </button>
+                        )}
                         <button
-                          onClick={markAllAsRead}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium touch-manipulation py-2 px-3"
+                          onClick={() => setShowNotifications(false)}
+                          className="sm:hidden rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 touch-manipulation"
                         >
-                          Mark all read
+                          <X className="h-4 w-4" />
                         </button>
-                      )}
-                      <button
-                        onClick={() => setShowNotifications(false)}
-                        className="sm:hidden rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 touch-manipulation"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
+                      </div>
                   </div>
                   
                   {notifications.length === 0 ? (
@@ -591,6 +606,7 @@ export default function Dashboard() {
                   )}
                 </div>
               )}
+              </div>
             </div>
           </div>
         </header>
