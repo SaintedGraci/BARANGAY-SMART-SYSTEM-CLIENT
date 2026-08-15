@@ -625,15 +625,6 @@ export default function AdminDashboard() {
     setShowAnnouncementModal(true);
   };
 
-  const handleAnnouncementFormChange = (event) => {
-    const { name, value, files } = event.target;
-    if (name === 'image') {
-      setAnnouncementForm((previous) => ({ ...previous, [name]: files[0] }));
-    } else {
-      setAnnouncementForm((previous) => ({ ...previous, [name]: value }));
-    }
-  };
-
   const [announcementForm, setAnnouncementForm] = useState({
     title: '',
     description: '',
