@@ -337,7 +337,7 @@ export default function AdminDashboard() {
     title: '',
     description: '',
     status: 'Active',
-    priority: 'Medium',
+    category: 'General',
     image: null,
   });
   const [pendingVerifications, setPendingVerifications] = useState([]);
@@ -606,7 +606,7 @@ export default function AdminDashboard() {
       title: '',
       description: '',
       status: 'Active',
-      priority: 'Medium',
+      category: 'General',
       image: null,
     });
     setShowAnnouncementModal(true);
@@ -619,7 +619,7 @@ export default function AdminDashboard() {
       title: announcement.title,
       description: announcement.description,
       status: announcement.status,
-      priority: announcement.priority || 'Medium',
+      category: announcement.category || 'General',
       image: null,
     });
     setShowAnnouncementModal(true);
@@ -646,7 +646,7 @@ export default function AdminDashboard() {
       formData.append('title', announcementForm.title);
       formData.append('description', announcementForm.description);
       formData.append('status', announcementForm.status);
-      formData.append('priority', announcementForm.priority);
+      formData.append('category', announcementForm.category);
       
       if (announcementForm.image) {
         formData.append('image', announcementForm.image);
@@ -666,7 +666,7 @@ export default function AdminDashboard() {
         title: '',
         description: '',
         status: 'Active',
-        priority: 'Medium',
+        category: 'General',
         image: null,
       });
       fetchAnnouncements();
@@ -2071,16 +2071,17 @@ export default function AdminDashboard() {
               </FieldSelect>
             </div>
             <div>
-              <FieldLabel>Priority</FieldLabel>
+              <FieldLabel>Category</FieldLabel>
               <FieldSelect
-                name="priority"
-                value={announcementForm.priority}
+                name="category"
+                value={announcementForm.category}
                 onChange={handleAnnouncementFormChange}
               >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Urgent">Urgent</option>
+                <option value="General">General</option>
+                <option value="Emergency">Emergency</option>
+                <option value="Important">Important</option>
+                <option value="Events">Events</option>
+                <option value="Advisories">Advisories</option>
               </FieldSelect>
             </div>
           </div>
