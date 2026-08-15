@@ -10,7 +10,7 @@ const PRIORITY_CONFIG = {
   Low: { emoji: '⚪', label: 'GENERAL', className: 'bg-slate-100 text-slate-700 border-slate-300' },
 };
 
-export default function AnnouncementPost({ announcement, userRole, onEdit, onDelete, onPin, onArchive }) {
+export default function AnnouncementPost({ announcement, userRole, onEdit, onDelete, onPin, onArchive, isFirstFew = false }) {
   const [showMenu, setShowMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -197,7 +197,7 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
         </div>
 
         {/* Media */}
-        {announcement.imagePath && (
+        {(announcement.imagePath || announcement.mediumUrl) && (
           <div className="relative bg-slate-50">
             {isVideo(announcement.imagePath) ? (
               <video
@@ -214,10 +214,17 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
                 onClick={() => setShowLightbox(true)}
               >
                 <OptimizedImage
-                  src={announcement.imagePath}
+                  src={announcement.mediumUrl || announcement.imagePath}
+                  srcSet={
+                    announcement.thumbnailUrl && announcement.mediumUrl && announcement.largeUrl
+                      ? `${announcement.thumbnailUrl} 400w, ${announcement.mediumUrl} 800w, ${announcement.largeUrl} 1200w`
+                      : undefined
+                  }
+                  sizes="(max-width: 768px) 100vw, 800px"
                   alt={announcement.title}
                   width="800"
                   height="600"
+                  eager={isFirstFew}
                   className="w-full max-h-[600px] object-cover"
                   onError={(e) => {
                     console.error('Failed to load image:', announcement.imagePath);
@@ -259,7 +266,7 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
             </svg>
           </button>
           <img
-            src={announcement.imagePath}
+            src={announcement.largeUrl || announcement.imagePath}
             alt={announcement.title}
             className="max-w-full max-h-full object-contain"
             onClick={(e) => e.stopPropagation()}

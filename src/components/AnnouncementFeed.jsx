@@ -176,7 +176,7 @@ export default function AnnouncementFeed({
           </div>
         ) : (
           <div className="space-y-6">
-            {filteredAnnouncements.map((announcement) => (
+            {filteredAnnouncements.map((announcement, index) => (
               <AnnouncementPost
                 key={announcement.id}
                 announcement={announcement}
@@ -185,6 +185,7 @@ export default function AnnouncementFeed({
                 onDelete={onDelete}
                 onPin={onPin}
                 onArchive={onArchive}
+                isFirstFew={index < 3}
               />
             ))}
           </div>
