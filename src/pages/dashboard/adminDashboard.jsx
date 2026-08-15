@@ -1651,6 +1651,10 @@ export default function AdminDashboard() {
                             <img
                               src={selectedVerification.validIdPath}
                               alt="Valid ID"
+                              onError={(e) => {
+                                console.error('Failed to load valid ID:', selectedVerification.validIdPath);
+                                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f1f5f9" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EImage not available%3C/text%3E%3C/svg%3E';
+                              }}
                               className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
                                 blurredDocuments[`${selectedVerification.id}-validId`] ? 'blur-xl' : 'blur-none'
                               }`}
@@ -1699,6 +1703,10 @@ export default function AdminDashboard() {
                             <img
                               src={selectedVerification.proofOfResidencyPath}
                               alt="Proof of Residency"
+                              onError={(e) => {
+                                console.error('Failed to load proof of residency:', selectedVerification.proofOfResidencyPath);
+                                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f1f5f9" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EImage not available%3C/text%3E%3C/svg%3E';
+                              }}
                               className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
                                 blurredDocuments[`${selectedVerification.id}-proofOfResidency`] ? 'blur-xl' : 'blur-none'
                               }`}
@@ -2653,6 +2661,10 @@ export default function AdminDashboard() {
                         <img
                           src={selectedVerification.validIdPath}
                           alt="Valid ID"
+                          onError={(e) => {
+                            console.error('Failed to load valid ID:', selectedVerification.validIdPath);
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f1f5f9" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EImage not available%3C/text%3E%3C/svg%3E';
+                          }}
                           className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
                             blurredDocuments.validId ? 'blur-xl' : 'blur-none'
                           }`}
@@ -2702,6 +2714,10 @@ export default function AdminDashboard() {
                         <img
                           src={selectedVerification.proofOfResidencyPath}
                           alt="Proof of Residency"
+                          onError={(e) => {
+                            console.error('Failed to load proof of residency:', selectedVerification.proofOfResidencyPath);
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f1f5f9" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EImage not available%3C/text%3E%3C/svg%3E';
+                          }}
                           className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
                             blurredDocuments.proofOfResidency ? 'blur-xl' : 'blur-none'
                           }`}
