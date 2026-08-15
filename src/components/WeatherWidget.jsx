@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Cloud, CloudRain, Sun, CloudSnow, Wind, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function WeatherWidget() {
   const [weather, setWeather] = useState(null);
@@ -16,12 +19,11 @@ export default function WeatherWidget() {
   const fetchWeather = async () => {
     try {
       // Call backend API endpoint that fetches weather
-      const response = await fetch('/api/weather');
-      if (!response.ok) throw new Error('Weather unavailable');
-      const data = await response.json();
-      setWeather(data);
+      const response = await axios.get(`${API_BASE_URL}/weather`);
+      setWeather(response.data);
       setError(null);
     } catch (err) {
+      console.error('Weather fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
