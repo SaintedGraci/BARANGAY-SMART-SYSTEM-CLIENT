@@ -197,15 +197,15 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
         </div>
 
         {/* Media */}
-        {(announcement.imagePath || announcement.mediumUrl) && (
+        {(announcement.imagePath || announcement.mediumUrl || announcement.largeUrl) && (
           <div className="relative bg-slate-50">
-            {isVideo(announcement.imagePath) ? (
+            {isVideo(announcement.imagePath || announcement.largeUrl) ? (
               <video
                 controls
                 className="w-full max-h-[600px]"
-                poster={announcement.imagePath.replace(/\.[^/.]+$/, '') + '-thumb.jpg'}
+                poster={(announcement.imagePath || announcement.largeUrl).replace(/\.[^/.]+$/, '') + '-thumb.jpg'}
               >
-                <source src={announcement.imagePath} type="video/mp4" />
+                <source src={announcement.imagePath || announcement.largeUrl} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             ) : (
@@ -214,7 +214,7 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
                 onClick={() => setShowLightbox(true)}
               >
                 <OptimizedImage
-                  src={announcement.mediumUrl || announcement.imagePath}
+                  src={announcement.mediumUrl || announcement.imagePath || announcement.largeUrl}
                   srcSet={
                     announcement.thumbnailUrl && announcement.mediumUrl && announcement.largeUrl
                       ? `${announcement.thumbnailUrl} 400w, ${announcement.mediumUrl} 800w, ${announcement.largeUrl} 1200w`
@@ -228,7 +228,6 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
                   className="w-full max-h-[600px] object-cover"
                   onError={(e) => {
                     console.error('Failed to load image:', announcement.imagePath);
-                    e.target.style.display = 'none';
                   }}
                 />
               </div>
@@ -266,7 +265,7 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
             </svg>
           </button>
           <img
-            src={announcement.largeUrl || announcement.imagePath}
+            src={announcement.largeUrl || announcement.imagePath || announcement.mediumUrl}
             alt={announcement.title}
             className="max-w-full max-h-full object-contain"
             onClick={(e) => e.stopPropagation()}
