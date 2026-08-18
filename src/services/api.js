@@ -207,6 +207,7 @@ export const complaintsAPI = {
 export const residentsAPI = {
   getAll: () => api.get('/residents'),
   getById: (id) => api.get(`/residents/${id}`),
+  getMyProfile: () => api.get('/residents/my-profile'),
   create: (data) => api.post('/residents', data),
   createWithAccount: (data) => api.post('/residents/create-with-account', data),
   update: (id, data) => api.put(`/residents/${id}`, data),
