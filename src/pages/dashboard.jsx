@@ -257,6 +257,8 @@ export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [isSubmittingComplaint, setIsSubmittingComplaint] = useState(false);
   const [requestForm, setRequestForm] = useState({
     documentType: 'Barangay Clearance',
     purpose: '',
@@ -314,6 +316,11 @@ export default function Dashboard() {
 
   const handleRequestSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmittingRequest) return;
+    
+    setIsSubmittingRequest(true);
     try {
       await requestsAPI.create(requestForm);
       setIsRequestModalOpen(false);
@@ -323,9 +330,13 @@ export default function Dashboard() {
         remarks: ''
       });
       fetchData();
+      // Show success message
+      alert('Request submitted successfully!');
     } catch (error) {
       console.error('Error creating request:', error);
       alert(error.response?.data?.message || 'Failed to create request');
+    } finally {
+      setIsSubmittingRequest(false);
     }
   };
 
@@ -351,6 +362,11 @@ export default function Dashboard() {
 
   const handleComplaintSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmittingComplaint) return;
+    
+    setIsSubmittingComplaint(true);
     try {
       await complaintsAPI.create(complaintForm);
       setIsComplaintModalOpen(false);
@@ -363,6 +379,8 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error creating complaint:', error);
       alert(error.response?.data?.message || 'Failed to submit complaint');
+    } finally {
+      setIsSubmittingComplaint(false);
     }
   };
 
@@ -1100,10 +1118,20 @@ export default function Dashboard() {
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800"
+            disabled={isSubmittingRequest}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="h-4 w-4" />
-            Submit Request
+            {isSubmittingRequest ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                Submit Request
+              </>
+            )}
           </button>
         </form>
       </DashboardModal>
@@ -1314,10 +1342,20 @@ export default function Dashboard() {
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-600/15 transition hover:bg-amber-700"
+            disabled={isSubmittingComplaint}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-600/15 transition hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="h-4 w-4" />
-            Submit Complaint
+            {isSubmittingComplaint ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                Submit Complaint
+              </>
+            )}
           </button>
         </form>
       </DashboardModal>
