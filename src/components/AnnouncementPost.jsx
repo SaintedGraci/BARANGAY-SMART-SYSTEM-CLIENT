@@ -337,14 +337,14 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
             <button 
               onClick={handleReaction}
               disabled={loadingReaction}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-semibold transition-colors duration-150 ${
                 reactions.userReacted 
                   ? 'text-emerald-600 bg-emerald-50' 
                   : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <ThumbsUp className={`w-4 h-4 transition-all duration-150 ${reactions.userReacted ? 'fill-emerald-600' : ''}`} />
-              <span className="hidden sm:inline">Helpful</span>
+              <span className={`hidden sm:inline text-sm ${reactions.userReacted ? 'text-emerald-600' : ''}`}>Helpful</span>
             </button>
             <button 
               onClick={() => setShowComments(!showComments)}
