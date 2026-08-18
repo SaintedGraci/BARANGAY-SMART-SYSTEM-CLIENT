@@ -191,6 +191,13 @@ export const announcementsAPI = {
   delete: (id) => api.delete(`/announcements/${id}`),
   togglePin: (id) => api.patch(`/announcements/${id}/pin`),
   archive: (id) => api.patch(`/announcements/${id}/archive`),
+  // Reactions
+  toggleReaction: (id) => api.post(`/announcements/${id}/react`),
+  getReactions: (id) => api.get(`/announcements/${id}/reactions`),
+  // Comments
+  addComment: (id, comment) => api.post(`/announcements/${id}/comments`, { comment }),
+  getComments: (id) => api.get(`/announcements/${id}/comments`),
+  deleteComment: (id, commentId) => api.delete(`/announcements/${id}/comments/${commentId}`),
 };
 
 // Complaints API

@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Edit3, Trash2, Pin, Archive, MoreVertical, ThumbsUp, MessageSquare, Share2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Edit3, Trash2, Pin, Archive, MoreVertical, ThumbsUp, MessageSquare, X, Send } from 'lucide-react';
 import OptimizedImage from './ui/OptimizedImage';
+import { announcementsAPI } from '../services/api';
 
 // Priority badges with modern styling
 const PRIORITY_CONFIG = {
@@ -14,6 +15,81 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
   const [showMenu, setShowMenu] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [reactions, setReactions] = useState({ count: 0, userReacted: false });
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [loadingReaction, setLoadingReaction] = useState(false);
+  const [loadingComment, setLoadingComment] = useState(false);
+
+  useEffect(() => {
+    if (announcement?.id) {
+      fetchReactions();
+    }
+  }, [announcement?.id]);
+
+  useEffect(() => {
+    if (showComments && announcement?.id) {
+      fetchComments();
+    }
+  }, [showComments, announcement?.id]);
+
+  const fetchReactions = async () => {
+    try {
+      const response = await announcementsAPI.getReactions(announcement.id);
+      setReactions(response.data.data);
+    } catch (error) {
+      console.error('Error fetching reactions:', error);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const response = await announcementsAPI.getComments(announcement.id);
+      setComments(response.data.data.comments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
+  const handleReaction = async () => {
+    if (loadingReaction) return;
+    
+    setLoadingReaction(true);
+    try {
+      await announcementsAPI.toggleReaction(announcement.id);
+      await fetchReactions();
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+    } finally {
+      setLoadingReaction(false);
+    }
+  };
+
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim() || loadingComment) return;
+
+    setLoadingComment(true);
+    try {
+      await announcementsAPI.addComment(announcement.id, newComment.trim());
+      setNewComment('');
+      await fetchComments();
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    } finally {
+      setLoadingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await announcementsAPI.deleteComment(announcement.id, commentId);
+      await fetchComments();
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
 
   const isAdmin = ['admin', 'captain', 'secretary'].includes(userRole);
   const priorityConfig = PRIORITY_CONFIG[announcement.priority] || PRIORITY_CONFIG.Low;
@@ -238,16 +314,90 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
         {/* Post Footer - Interactions */}
         <div className="border-t border-slate-200 px-4 sm:px-5 py-3">
           <div className="flex items-center gap-1 sm:gap-2">
-            <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
-              <ThumbsUp className="w-4 h-4" />
+            <button 
+              onClick={handleReaction}
+              disabled={loadingReaction}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                reactions.userReacted 
+                  ? 'text-blue-600 bg-blue-50' 
+                  : 'text-slate-600 hover:bg-slate-50'
+              } disabled:opacity-50`}
+            >
+              <ThumbsUp className={`w-4 h-4 ${reactions.userReacted ? 'fill-blue-600' : ''}`} />
               <span className="hidden sm:inline">Helpful</span>
+              {reactions.count > 0 ? <span className="text-xs">({reactions.count})</span> : null}
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+            <button 
+              onClick={() => setShowComments(!showComments)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Comment</span>
+              {comments.length > 0 ? <span className="text-xs">({comments.length})</span> : null}
             </button>
           </div>
         </div>
+
+        {/* Comments Section */}
+        {showComments ? (
+          <div className="border-t border-slate-200 px-4 sm:px-5 py-4 bg-slate-50">
+            {/* Comment Form */}
+            <form onSubmit={handleAddComment} className="mb-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write a comment..."
+                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={!newComment.trim() || loadingComment}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </form>
+
+            {/* Comments List */}
+            <div className="space-y-3">
+              {comments.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-4">No comments yet. Be the first to comment!</p>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="bg-white p-3 rounded-lg">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm text-slate-900">
+                          {comment.user?.fullName || comment.user?.username}
+                        </p>
+                        <p className="text-sm text-slate-700 mt-1">{comment.comment}</p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      {(isAdmin || comment.user?.id === comment.userId) ? (
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : null}
       </article>
 
       {/* Image Lightbox */}
