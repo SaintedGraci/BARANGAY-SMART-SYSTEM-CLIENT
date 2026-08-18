@@ -311,71 +311,136 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
           </div>
         )}
 
-        {/* Post Footer - Interactions */}
+        {/* Post Footer - Interactions with Green Branding */}
         <div className="border-t border-slate-200 px-4 sm:px-5 py-3">
+          {/* Reaction & Comment Summary Line */}
+          {(reactions.count > 0 || comments.length > 0) && (
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-2 px-1">
+              <span className={reactions.count > 0 ? 'flex items-center gap-1' : ''}>
+                {reactions.count > 0 && (
+                  <>
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white">
+                      <ThumbsUp className="w-2.5 h-2.5 fill-white" />
+                    </span>
+                    <span>{reactions.count} {reactions.count === 1 ? 'person found' : 'people found'} this helpful</span>
+                  </>
+                )}
+              </span>
+              <span>
+                {comments.length > 0 && `${comments.length} ${comments.length === 1 ? 'Comment' : 'Comments'}`}
+              </span>
+            </div>
+          )}
+          
+          {/* Action Buttons */}
           <div className="flex items-center gap-1 sm:gap-2">
             <button 
               onClick={handleReaction}
               disabled={loadingReaction}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 ${
                 reactions.userReacted 
-                  ? 'text-blue-600 bg-blue-50' 
-                  : 'text-slate-600 hover:bg-slate-50'
-              } disabled:opacity-50`}
+                  ? 'text-emerald-600 bg-emerald-50' 
+                  : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <ThumbsUp className={`w-4 h-4 ${reactions.userReacted ? 'fill-blue-600' : ''}`} />
+              <ThumbsUp className={`w-4 h-4 transition-all duration-150 ${reactions.userReacted ? 'fill-emerald-600' : ''}`} />
               <span className="hidden sm:inline">Helpful</span>
-              {reactions.count > 0 ? <span className="text-xs">({reactions.count})</span> : null}
             </button>
             <button 
               onClick={() => setShowComments(!showComments)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 ${
+                showComments
+                  ? 'text-emerald-600 bg-emerald-50'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
             >
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Comment</span>
-              {comments.length > 0 ? <span className="text-xs">({comments.length})</span> : null}
             </button>
           </div>
         </div>
 
-        {/* Comments Section */}
-        {showComments ? (
+        {/* Progressive Comment Section - Hidden by Default */}
+        {showComments && (
           <div className="border-t border-slate-200 px-4 sm:px-5 py-4 bg-slate-50">
-            {/* Comment Form */}
+            {/* Comment Input Area with Avatar */}
             <form onSubmit={handleAddComment} className="mb-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write a comment..."
-                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-                <button
-                  type="submit"
-                  disabled={!newComment.trim() || loadingComment}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
+              <div className="flex items-start gap-2 sm:gap-3">
+                {/* Current User Avatar */}
+                <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
+                  {userRole ? userRole.charAt(0).toUpperCase() : 'U'}
+                </div>
+                
+                {/* Comment Input */}
+                <div className="flex-1 flex gap-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write a comment..."
+                    className="flex-1 px-3 sm:px-4 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm bg-white transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || loadingComment}
+                    className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    {loadingComment ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
 
-            {/* Comments List */}
+            {/* Comments List with Avatars */}
             <div className="space-y-3">
               {comments.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">No comments yet. Be the first to comment!</p>
+                <div className="text-center py-6">
+                  <MessageSquare className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No comments yet. Be the first to comment!</p>
+                </div>
               ) : (
-                comments.map((comment) => (
-                  <div key={comment.id} className="bg-white p-3 rounded-lg">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <p className="font-semibold text-sm text-slate-900">
-                          {comment.user?.fullName || comment.user?.username}
-                        </p>
-                        <p className="text-sm text-slate-700 mt-1">{comment.comment}</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                comments.map((comment) => {
+                  const userName = comment.user?.fullName || comment.user?.username || 'Unknown User';
+                  const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                  
+                  return (
+                    <div key={comment.id} className="flex items-start gap-2 sm:gap-3">
+                      {/* Commenter Avatar */}
+                      <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+                        {userInitials}
+                      </div>
+                      
+                      {/* Comment Bubble */}
+                      <div className="flex-1 min-w-0">
+                        <div className="bg-slate-100 rounded-2xl px-3 sm:px-4 py-2 sm:py-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm text-slate-900 truncate">
+                                {userName}
+                              </p>
+                              <p className="text-sm text-slate-700 mt-0.5 break-words">{comment.comment}</p>
+                            </div>
+                            
+                            {/* Delete Button for Own Comments or Admin */}
+                            {(isAdmin || comment.userId === comment.user?.id) && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="flex-shrink-0 p-1 text-slate-400 hover:text-rose-600 transition-colors rounded"
+                                aria-label="Delete comment"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Timestamp */}
+                        <p className="text-xs text-slate-500 mt-1 px-2">
+                          {new Date(comment.createdAt).toLocaleString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',
@@ -383,21 +448,13 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
                           })}
                         </p>
                       </div>
-                      {(isAdmin || comment.user?.id === comment.userId) ? (
-                        <button
-                          onClick={() => handleDeleteComment(comment.id)}
-                          className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      ) : null}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
-        ) : null}
+        )}
       </article>
 
       {/* Image Lightbox */}
