@@ -14,11 +14,15 @@ import {
   IdCard
 } from 'lucide-react';
 import { residentsAPI } from '../services/api';
+import EditProfileModal from './EditProfileModal';
+import ChangePasswordModal from './ChangePasswordModal';
 
 function ResidentProfile({ user }) {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -36,6 +40,15 @@ function ResidentProfile({ user }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpdateProfile = async (updatedData) => {
+    await residentsAPI.updateMyProfile(updatedData);
+    await fetchProfile();
+  };
+
+  const handleChangePassword = async (passwordData) => {
+    await residentsAPI.changePassword(passwordData);
   };
 
   const calculateProfileCompletion = () => {
@@ -172,6 +185,13 @@ function ResidentProfile({ user }) {
               <IdCard className="w-5 h-5 text-blue-600" />
               Personal Information
             </h3>
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition font-medium text-sm flex items-center gap-1.5"
+            >
+              <Edit3 className="w-4 h-4" />
+              Edit Profile
+            </button>
           </div>
           
           <div className="space-y-4">
@@ -341,13 +361,30 @@ function ResidentProfile({ user }) {
               <p className="font-medium text-gray-900">Password</p>
               <p className="text-sm text-gray-600">Your password is protected</p>
             </div>
-            <button className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition font-medium text-sm flex items-center gap-2">
+            <button 
+              onClick={() => setShowPasswordModal(true)}
+              className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition font-medium text-sm flex items-center gap-2"
+            >
               <Edit3 className="w-4 h-4" />
               Change Password
             </button>
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <EditProfileModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        profileData={profileData}
+        onUpdate={handleUpdateProfile}
+      />
+
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onChangePassword={handleChangePassword}
+      />
     </div>
   );
 }
