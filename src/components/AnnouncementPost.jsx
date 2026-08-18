@@ -314,48 +314,45 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
         {/* Post Footer - Interactions with Green Branding */}
         <div className="border-t border-slate-200 px-4 sm:px-5 py-3">
           {/* Reaction & Comment Summary Line */}
-          {(reactions.count > 0 || comments.length > 0) && (
-            <div className="flex items-center justify-between text-xs text-slate-500 mb-2 px-1">
-              <span className={reactions.count > 0 ? 'flex items-center gap-1' : ''}>
-                {reactions.count > 0 && (
-                  <>
-                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white">
-                      <ThumbsUp className="w-2.5 h-2.5 fill-white" />
-                    </span>
-                    <span>{reactions.count} {reactions.count === 1 ? 'person found' : 'people found'} this helpful</span>
-                  </>
-                )}
-              </span>
-              <span>
-                {comments.length > 0 && `${comments.length} ${comments.length === 1 ? 'Comment' : 'Comments'}`}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-3 px-1">
+            <span className={reactions.count > 0 ? 'flex items-center gap-1' : ''}>
+              {reactions.count > 0 && (
+                <>
+                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white">
+                    <ThumbsUp className="w-2.5 h-2.5 fill-white" />
+                  </span>
+                  <span className="font-medium text-slate-700">{reactions.count}</span>
+                </>
+              )}
+            </span>
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className="hover:underline"
+            >
+              {comments.length > 0 && `${comments.length} ${comments.length === 1 ? 'Comment' : 'Comments'}`}
+            </button>
+          </div>
           
           {/* Action Buttons */}
           <div className="flex items-center gap-1 sm:gap-2">
             <button 
               onClick={handleReaction}
               disabled={loadingReaction}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
                 reactions.userReacted 
-                  ? 'text-emerald-600 bg-emerald-50' 
-                  : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'
+                  ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' 
+                  : 'text-slate-600 hover:bg-slate-100'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <ThumbsUp className={`w-4 h-4 transition-all duration-150 ${reactions.userReacted ? 'fill-emerald-600' : ''}`} />
-              <span className="hidden sm:inline">Helpful</span>
+              <ThumbsUp className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-150 ${reactions.userReacted ? 'fill-emerald-600' : ''}`} />
+              <span>Helpful</span>
             </button>
             <button 
               onClick={() => setShowComments(!showComments)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 ${
-                showComments
-                  ? 'text-emerald-600 bg-emerald-50'
-                  : 'text-slate-600 hover:bg-slate-50'
-              }`}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors duration-150"
             >
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">Comment</span>
+              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Comment</span>
             </button>
           </div>
         </div>
