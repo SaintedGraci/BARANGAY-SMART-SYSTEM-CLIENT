@@ -4,6 +4,7 @@ import { Eye, EyeOff, Lock, User, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import bakilidLogo from "../assets/bakilidlogo.png";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { TurnstileDebug } from "../components/TurnstileDebug";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ export default function LoginPage() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 flex relative overflow-hidden">
+      <TurnstileDebug />
       {/* Animated background gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-pulse"></div>
@@ -270,24 +272,38 @@ export default function LoginPage() {
             </div>
 
             {/* Turnstile Widget */}
-            <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onError={() => {
-                  setTurnstileToken("");
-                  setError("Verification failed. Please try again.");
-                }}
-                onExpire={() => {
-                  setTurnstileToken("");
-                  setError("Verification expired. Please verify again.");
-                }}
-                options={{
-                  theme: "light",
-                  size: "normal",
-                }}
-              />
+            <div className="flex flex-col items-center space-y-2">
+              <div className="min-h-[65px] flex items-center justify-center">
+                {import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onError={() => {
+                      setTurnstileToken("");
+                      setError("Verification failed. Please try again.");
+                    }}
+                    onExpire={() => {
+                      setTurnstileToken("");
+                      setError("Verification expired. Please verify again.");
+                    }}
+                    onLoad={() => {
+                      console.log("✅ Turnstile loaded successfully");
+                    }}
+                    options={{
+                      theme: "light",
+                      size: "normal",
+                    }}
+                  />
+                ) : (
+                  <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600 font-medium">Security verification unavailable</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      Site key missing: {import.meta.env.VITE_TURNSTILE_SITE_KEY || 'undefined'}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Submit */}
