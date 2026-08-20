@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, ArrowRight, Eye, EyeOff, Lock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import bakilidLogo from "../assets/bakilidlogo.png";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -14,14 +15,22 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
+    if (!turnstileToken) {
+      setError("Please complete the verification challenge");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password, turnstileToken);
 
       if (result.success) {
         const userData = JSON.parse(localStorage.getItem("user"));
@@ -30,16 +39,22 @@ export default function AdminLogin() {
           navigate("/admin/dashboard");
         } else {
           setError("Access denied. Admin credentials required.");
-          await logout(); // Properly clear auth state
+          await logout();
           setIsLoading(false);
+          setTurnstileToken("");
+          turnstileRef.current?.reset();
         }
       } else {
         setError(result.message || "Invalid email or password");
         setIsLoading(false);
+        setTurnstileToken("");
+        turnstileRef.current?.reset();
       }
     } catch (err) {
       setError("An error occurred during login. Please try again.");
       setIsLoading(false);
+      setTurnstileToken("");
+      turnstileRef.current?.reset();
     }
   };
 
@@ -214,6 +229,27 @@ export default function AdminLogin() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Turnstile Widget */}
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => {
+                  setTurnstileToken("");
+                  setError("Verification failed. Please try again.");
+                }}
+                onExpire={() => {
+                  setTurnstileToken("");
+                  setError("Verification expired. Please verify again.");
+                }}
+                options={{
+                  theme: "light",
+                  size: "normal",
+                }}
+              />
             </div>
 
             {/* Submit */}

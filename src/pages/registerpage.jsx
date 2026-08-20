@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Eye, EyeOff, User, Mail, ArrowRight, ArrowLeft, ShieldCheck, Upload, 
@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import bakilidLogo from "../assets/bakilidlogo.png";
 import axios from "axios";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -28,6 +29,10 @@ export default function RegisterPage() {
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
+  
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef(null);
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -229,6 +234,12 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError("");
 
+    if (!turnstileToken) {
+      setError("Please complete the verification challenge");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const submitData = new FormData();
       submitData.append('username', formData.username);
@@ -244,6 +255,7 @@ export default function RegisterPage() {
       submitData.append('purok', formData.purok);
       submitData.append('validId', formData.validId);
       submitData.append('proofOfResidency', formData.proofOfResidency);
+      submitData.append('turnstileToken', turnstileToken);
 
       const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register`, submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -254,6 +266,8 @@ export default function RegisterPage() {
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setTurnstileToken("");
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -1108,6 +1122,29 @@ export default function RegisterPage() {
                       You&apos;ll receive a notification once your account is verified.
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Turnstile CAPTCHA */}
+              <div className="mt-6">
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-2 mb-3">
+                  <ShieldCheck className="h-4 w-4" />
+                  Security Verification <span className="text-red-500">*</span>
+                </label>
+                <div className="flex justify-center">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onError={() => {
+                      setTurnstileToken("");
+                      setError("Verification failed. Please try again.");
+                    }}
+                    onExpire={() => {
+                      setTurnstileToken("");
+                      setError("Verification expired. Please verify again.");
+                    }}
+                  />
                 </div>
               </div>
             </div>

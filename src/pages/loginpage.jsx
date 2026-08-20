@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, User, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import bakilidLogo from "../assets/bakilidlogo.png";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -10,6 +11,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef(null);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -21,8 +24,14 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
+    if (!turnstileToken) {
+      setError("Please complete the verification challenge");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const result = await login(formData.username, formData.password);
+      const result = await login(formData.username, formData.password, turnstileToken);
 
       if (result.success) {
         const userData = JSON.parse(localStorage.getItem("user"));
@@ -35,14 +44,20 @@ export default function LoginPage() {
           );
           await logout();
           setIsLoading(false);
+          setTurnstileToken("");
+          turnstileRef.current?.reset();
         }
       } else {
         setError(result.message || "Invalid username or password");
         setIsLoading(false);
+        setTurnstileToken("");
+        turnstileRef.current?.reset();
       }
     } catch (err) {
       setError("An error occurred during login. Please try again.");
       setIsLoading(false);
+      setTurnstileToken("");
+      turnstileRef.current?.reset();
     }
   };
 
@@ -252,6 +267,27 @@ export default function LoginPage() {
               <span className="text-xs text-gray-500">
                 Forgot password? <span className="text-gray-400">Contact barangay office</span>
               </span>
+            </div>
+
+            {/* Turnstile Widget */}
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => {
+                  setTurnstileToken("");
+                  setError("Verification failed. Please try again.");
+                }}
+                onExpire={() => {
+                  setTurnstileToken("");
+                  setError("Verification expired. Please verify again.");
+                }}
+                options={{
+                  theme: "light",
+                  size: "normal",
+                }}
+              />
             </div>
 
             {/* Submit */}
