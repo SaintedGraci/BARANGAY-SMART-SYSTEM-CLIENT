@@ -4,6 +4,7 @@ import { User, ArrowRight, Eye, EyeOff, Lock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import bakilidLogo from "../assets/bakilidlogo.png";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { TURNSTILE_SITE_KEY, isTurnstileAvailable } from "../config/turnstile";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -233,23 +234,29 @@ export default function AdminLogin() {
 
             {/* Turnstile Widget */}
             <div className="flex justify-center">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onError={() => {
-                  setTurnstileToken("");
-                  setError("Verification failed. Please try again.");
-                }}
-                onExpire={() => {
-                  setTurnstileToken("");
-                  setError("Verification expired. Please verify again.");
-                }}
-                options={{
-                  theme: "light",
-                  size: "normal",
-                }}
-              />
+              {isTurnstileAvailable ? (
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onError={() => {
+                    setTurnstileToken("");
+                    setError("Verification failed. Please try again.");
+                  }}
+                  onExpire={() => {
+                    setTurnstileToken("");
+                    setError("Verification expired. Please verify again.");
+                  }}
+                  options={{
+                    theme: "light",
+                    size: "normal",
+                  }}
+                />
+              ) : (
+                <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600 font-medium">Security verification unavailable</p>
+                </div>
+              )}
             </div>
 
             {/* Submit */}

@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import bakilidLogo from "../assets/bakilidlogo.png";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { TurnstileDebug } from "../components/TurnstileDebug";
+import { TURNSTILE_SITE_KEY, isTurnstileAvailable } from "../config/turnstile";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -25,14 +26,19 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
-    if (!turnstileToken) {
+    // Check if Turnstile is available
+    if (isTurnstileAvailable && !turnstileToken) {
       setError("Please complete the verification challenge");
       setIsLoading(false);
       return;
     }
 
     try {
-      const result = await login(formData.username, formData.password, turnstileToken);
+      const result = await login(
+        formData.username, 
+        formData.password, 
+        turnstileToken || 'MISSING_TURNSTILE'
+      );
 
       if (result.success) {
         const userData = JSON.parse(localStorage.getItem("user"));
@@ -273,22 +279,27 @@ export default function LoginPage() {
 
             {/* Turnstile Widget */}
             <div className="flex flex-col items-center space-y-2">
-              <div className="min-h-[65px] flex items-center justify-center">
-                {import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
+              <div className="min-h-[65px] flex items-center justify-center w-full">
+                {isTurnstileAvailable ? (
                   <Turnstile
                     ref={turnstileRef}
-                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                    onSuccess={(token) => setTurnstileToken(token)}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => {
+                      console.log("✅ Turnstile verification successful");
+                      setTurnstileToken(token);
+                    }}
                     onError={() => {
+                      console.error("❌ Turnstile verification error");
                       setTurnstileToken("");
                       setError("Verification failed. Please try again.");
                     }}
                     onExpire={() => {
+                      console.warn("⏰ Turnstile verification expired");
                       setTurnstileToken("");
                       setError("Verification expired. Please verify again.");
                     }}
                     onLoad={() => {
-                      console.log("✅ Turnstile loaded successfully");
+                      console.log("✅ Turnstile widget loaded");
                     }}
                     options={{
                       theme: "light",
@@ -296,10 +307,13 @@ export default function LoginPage() {
                     }}
                   />
                 ) : (
-                  <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600 font-medium">Security verification unavailable</p>
+                  <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg w-full max-w-sm">
+                    <p className="text-sm text-red-600 font-medium">❌ Security verification unavailable</p>
                     <p className="text-xs text-red-500 mt-1">
-                      Site key missing: {import.meta.env.VITE_TURNSTILE_SITE_KEY || 'undefined'}
+                      Site key: {TURNSTILE_SITE_KEY ? TURNSTILE_SITE_KEY.substring(0, 10) + '...' : 'Not configured'}
+                    </p>
+                    <p className="text-xs text-red-500 mt-1">
+                      Please contact administrator
                     </p>
                   </div>
                 )}
