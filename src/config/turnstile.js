@@ -6,7 +6,9 @@ const getTurnstileSiteKey = () => {
   const envKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
   
   if (envKey && envKey !== 'PLACEHOLDER_USE_VERCEL_ENV_VARS' && envKey.length > 10) {
-    console.log('✅ Using Turnstile key from environment');
+    if (import.meta.env.DEV) {
+      console.log('✅ Using Turnstile key from environment');
+    }
     return envKey;
   }
   
@@ -15,12 +17,16 @@ const getTurnstileSiteKey = () => {
   const PRODUCTION_SITE_KEY = 'YOUR_PRODUCTION_TURNSTILE_SITE_KEY_HERE';
   
   if (PRODUCTION_SITE_KEY !== 'YOUR_PRODUCTION_TURNSTILE_SITE_KEY_HERE') {
-    console.log('✅ Using hardcoded production Turnstile key');
+    if (import.meta.env.DEV) {
+      console.log('✅ Using hardcoded production Turnstile key');
+    }
     return PRODUCTION_SITE_KEY;
   }
   
   // 3. Fallback to test key for development
-  console.log('⚠️  Using test Turnstile key');
+  if (import.meta.env.DEV) {
+    console.log('⚠️  Using test Turnstile key');
+  }
   return '1x00000000000000000000AA';
 };
 

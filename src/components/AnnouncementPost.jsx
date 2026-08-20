@@ -330,7 +330,7 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
               onClick={() => setShowComments(!showComments)}
               className="text-slate-600 hover:underline font-medium"
             >
-              {comments.length > 0 ? `${comments.length} ${comments.length === 1 ? 'Comment' : 'Comments'}` : ''}
+              {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
             </button>
           </div>
           
@@ -339,14 +339,20 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
             <button 
               onClick={handleReaction}
               disabled={loadingReaction}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
                 reactions.userReacted 
-                  ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' 
+                  ? 'bg-emerald-50 hover:bg-emerald-100' 
                   : 'text-slate-600 hover:bg-slate-100'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              }`}
             >
-              <ThumbsUp className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-150 ${reactions.userReacted ? 'fill-emerald-600' : ''}`} />
-              <span>Helpful</span>
+              <ThumbsUp 
+                className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-150 ${
+                  reactions.userReacted ? 'fill-emerald-600 text-emerald-600' : 'text-slate-600'
+                }`} 
+              />
+              <span className={reactions.userReacted ? 'text-emerald-600' : 'text-slate-600'}>
+                Helpful
+              </span>
             </button>
             <button 
               onClick={() => setShowComments(!showComments)}
