@@ -24,14 +24,19 @@ export default function AdminLogin() {
     setError("");
     setIsLoading(true);
 
-    if (!turnstileToken) {
+    // Check if Turnstile is available
+    if (isTurnstileAvailable && !turnstileToken) {
       setError("Please complete the verification challenge");
       setIsLoading(false);
       return;
     }
 
     try {
-      const result = await login(formData.email, formData.password, turnstileToken);
+      const result = await login(
+        formData.email, 
+        formData.password, 
+        turnstileToken || 'MISSING_TURNSTILE'
+      );
 
       if (result.success) {
         const userData = JSON.parse(localStorage.getItem("user"));
