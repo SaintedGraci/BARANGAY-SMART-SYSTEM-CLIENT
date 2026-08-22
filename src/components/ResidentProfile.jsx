@@ -163,7 +163,7 @@ export default function ResidentProfile({ user }) {
   const profileCompletion = calculateProfileCompletion();
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Profile Header Banner */}
       <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 text-white relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent)]" />

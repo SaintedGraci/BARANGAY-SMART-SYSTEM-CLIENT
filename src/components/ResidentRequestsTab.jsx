@@ -64,7 +64,7 @@ export default function ResidentRequestsTab({ requests = [], onRequestClick, onN
   });
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 w-full">
       {/* Control Panel Card: Search, Action & Filters */}
       <Card className="overflow-hidden border-slate-200/80 bg-white shadow-sm">
         {/* Top gradient accent line */}
@@ -154,7 +154,7 @@ export default function ResidentRequestsTab({ requests = [], onRequestClick, onN
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {filteredRequests.map((request) => {
             const DocIcon = getDocIcon(request.documentType);
             const badgeVariant = getBadgeVariant(request.status);
