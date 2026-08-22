@@ -3,7 +3,7 @@ import { Menu } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminHeader from '../components/AdminHeader';
 
-export default function AdminLayout({ children, activeTab, onTabChange, menuItems, user, onLogout }) {
+export default function AdminLayout({ children, activeTab, onTabChange, menuItems, user, onLogout, onRefresh }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -48,6 +48,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, menuItem
           user={user}
           onMenuClick={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
+          onRefresh={onRefresh}
         />
 
         {/* Page content with scroll */}

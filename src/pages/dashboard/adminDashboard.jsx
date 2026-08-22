@@ -542,14 +542,27 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [requestsRes, residentsRes] = await Promise.all([
+      const [requestsRes, residentsRes, verificationsRes, complaintsRes] = await Promise.allSettled([
         requestsAPI.getAll(),
         residentsAPI.getAll(),
+        residentsAPI.getPendingVerifications(),
+        complaintsAPI.getAll(),
       ]);
 
-      setRequests(requestsRes.data.data || []);
-      const residentsData = residentsRes.data.data;
-      setResidents(Array.isArray(residentsData) ? residentsData : residentsData?.residents || []);
+      if (requestsRes.status === 'fulfilled') {
+        setRequests(requestsRes.value.data.data || []);
+      }
+      if (residentsRes.status === 'fulfilled') {
+        const residentsData = residentsRes.value.data.data;
+        setResidents(Array.isArray(residentsData) ? residentsData : residentsData?.residents || []);
+      }
+      if (verificationsRes.status === 'fulfilled') {
+        setPendingVerifications(verificationsRes.value.data.data || []);
+      }
+      if (complaintsRes.status === 'fulfilled') {
+        const data = complaintsRes.value.data.data || [];
+        setComplaints(Array.isArray(data) ? data : []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -822,14 +835,24 @@ export default function AdminDashboard() {
   const allMenuItems = [
     { id: 'overview', name: 'Overview', icon: LayoutDashboard },
     { id: 'analytics', name: 'Analytics', icon: BarChart3 },
-    { id: 'requests', name: 'All Requests', icon: FileText },
-    { id: 'complaints', name: 'Complaints', icon: AlertCircle, badge: complaints.filter(c => c.status === 'Pending').length },
+    {
+      id: 'requests',
+      name: 'All Requests',
+      icon: FileText,
+      badge: Array.isArray(requests) ? requests.filter((r) => r.status === 'Pending').length : 0,
+    },
+    {
+      id: 'complaints',
+      name: 'Complaints',
+      icon: AlertCircle,
+      badge: Array.isArray(complaints) ? complaints.filter((c) => c.status === 'Pending').length : 0,
+    },
     { id: 'residents', name: 'Residents', icon: Users },
     {
       id: 'verifications',
       name: 'Verifications',
       icon: ShieldCheck,
-      badge: pendingVerifications.length,
+      badge: Array.isArray(pendingVerifications) ? pendingVerifications.length : 0,
     },
     { id: 'announcements', name: 'Announcements', icon: Megaphone },
     { id: 'logs', name: 'System Logs', icon: Activity },
@@ -880,7 +903,7 @@ export default function AdminDashboard() {
     },
     {
       label: 'Pending Verifications',
-      value: pendingVerifications.length,
+      value: Array.isArray(pendingVerifications) ? pendingVerifications.length : 0,
       description: 'New registrations to review',
       icon: BadgeCheck,
       className: 'bg-violet-50 text-violet-700',
