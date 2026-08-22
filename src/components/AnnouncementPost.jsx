@@ -16,15 +16,23 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
   const [expanded, setExpanded] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [reactions, setReactions] = useState({ count: 0, userReacted: false });
+  const [isHelpful, setIsHelpful] = useState(false);
+  const [helpfulCount, setHelpfulCount] = useState(0);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loadingReaction, setLoadingReaction] = useState(false);
   const [loadingComment, setLoadingComment] = useState(false);
 
+  // Initialize reaction state from announcement prop
+  useEffect(() => {
+    if (announcement) {
+      setIsHelpful(announcement.isHelpful || false);
+      setHelpfulCount(announcement.helpfulCount || 0);
+    }
+  }, [announcement?.id, announcement?.isHelpful, announcement?.helpfulCount]);
+
   useEffect(() => {
     if (announcement?.id) {
-      fetchReactions();
       fetchComments(); // Fetch comments on mount
     }
   }, [announcement?.id]);
@@ -34,15 +42,6 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
       fetchComments(); // Refresh when opening comments
     }
   }, [showComments, announcement?.id]);
-
-  const fetchReactions = async () => {
-    try {
-      const response = await announcementsAPI.getReactions(announcement.id);
-      setReactions(response.data.data);
-    } catch (error) {
-      console.error('Error fetching reactions:', error);
-    }
-  };
 
   const fetchComments = async () => {
     try {
@@ -57,11 +56,30 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
     if (loadingReaction) return;
     
     setLoadingReaction(true);
+    
+    // Save current state for rollback
+    const previousIsHelpful = isHelpful;
+    const previousCount = helpfulCount;
+    
+    // Optimistic update
+    setIsHelpful(!isHelpful);
+    setHelpfulCount(isHelpful ? helpfulCount - 1 : helpfulCount + 1);
+    
     try {
-      await announcementsAPI.toggleReaction(announcement.id);
-      await fetchReactions();
+      const response = await announcementsAPI.toggleReaction(announcement.id);
+      
+      // Update with server response
+      setIsHelpful(response.data.data.isHelpful);
+      setHelpfulCount(response.data.data.helpfulCount);
+      
     } catch (error) {
       console.error('Error toggling reaction:', error);
+      
+      // Rollback on error
+      setIsHelpful(previousIsHelpful);
+      setHelpfulCount(previousCount);
+      
+      // TODO: Show error toast/notification
     } finally {
       setLoadingReaction(false);
     }
@@ -317,12 +335,12 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
           {/* Reaction & Comment Summary Line - Always visible */}
           <div className="flex items-center justify-between text-sm mb-3 px-1 min-h-[20px]">
             <div className="flex items-center gap-1.5">
-              {reactions.count > 0 && (
+              {helpfulCount > 0 && (
                 <>
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500">
                     <ThumbsUp className="w-3 h-3 fill-white text-white" />
                   </span>
-                  <span className="text-slate-600 font-medium">{reactions.count}</span>
+                  <span className="text-slate-600 font-medium">{helpfulCount}</span>
                 </>
               )}
             </div>
@@ -339,24 +357,24 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
             <button 
               onClick={handleReaction}
               disabled={loadingReaction}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
-                reactions.userReacted 
-                  ? 'bg-emerald-50 hover:bg-emerald-100' 
-                  : 'text-slate-600 hover:bg-slate-100'
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed ${
+                isHelpful 
+                  ? 'text-green-600 bg-green-50 hover:bg-green-100' 
+                  : 'text-gray-600 bg-gray-50 hover:bg-gray-100'
               }`}
             >
               <ThumbsUp 
-                className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-150 ${
-                  reactions.userReacted ? 'fill-emerald-600 text-emerald-600' : 'text-slate-600'
+                className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-200 ${
+                  isHelpful ? 'fill-green-600 text-green-600' : 'text-gray-600'
                 }`} 
               />
-              <span className={reactions.userReacted ? 'text-emerald-600' : 'text-slate-600'}>
+              <span className={isHelpful ? 'text-green-600' : 'text-gray-600'}>
                 Helpful
               </span>
             </button>
             <button 
               onClick={() => setShowComments(!showComments)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors duration-150"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-all duration-200 ease-in-out"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Comment</span>
