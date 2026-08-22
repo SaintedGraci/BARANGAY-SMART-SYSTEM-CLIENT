@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, ArrowRight, Eye, EyeOff, Lock } from "lucide-react";
+import { User, ArrowRight, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import bakilidLogo from "../assets/bakilidlogo.png";
 import { Turnstile } from "@marsidev/react-turnstile";
@@ -24,7 +24,6 @@ export default function AdminLogin() {
     setError("");
     setIsLoading(true);
 
-    // Check if Turnstile is available
     if (isTurnstileAvailable && !turnstileToken) {
       setError("Please complete the verification challenge");
       setIsLoading(false);
@@ -65,136 +64,69 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 flex relative overflow-hidden">
-      {/* Animated background gradient orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-      </div>
-
-      {/* Decorative elements - purple theme */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Top purple bar */}
-        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[#4A1D6B] via-[#5A2D7B] to-transparent shadow-2xl">
-          <div className="absolute top-6 left-12 flex gap-6 text-white/30">
-            <span className="text-2xl font-light animate-pulse">+</span>
-            <span className="text-2xl font-light animate-pulse" style={{ animationDelay: '0.5s' }}>+</span>
-          </div>
-          <div className="absolute top-5 right-12 flex gap-2">
-            <div className="w-12 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 transform rotate-45 shadow-lg"></div>
-            <div className="w-12 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 transform rotate-45 shadow-lg"></div>
-            <div className="w-12 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 transform rotate-45 shadow-lg"></div>
-            <div className="w-12 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 transform rotate-45 shadow-lg"></div>
-          </div>
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-2xl shadow-blue-500/50 animate-bounce" style={{ animationDuration: '3s' }}></div>
-          </div>
-        </div>
-
-        {/* Bottom purple bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#4A1D6B] via-[#5A2D7B] to-transparent shadow-2xl">
-          <div className="absolute bottom-6 left-8 flex gap-3">
-            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-lg shadow-blue-400/50"></div>
-            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-lg shadow-blue-400/50" style={{ animationDelay: '0.3s' }}></div>
-            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-lg shadow-blue-400/50" style={{ animationDelay: '0.6s' }}></div>
-          </div>
-          <div className="absolute bottom-6 right-12 flex gap-6 text-white/30">
-            <span className="text-2xl font-light animate-pulse">+</span>
-            <span className="text-2xl font-light animate-pulse" style={{ animationDelay: '0.5s' }}>+</span>
-          </div>
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full border-4 border-purple-300/50 animate-ping" style={{ animationDuration: '2s' }}></div>
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full border-4 border-purple-300/60"></div>
-        </div>
-
-        {/* Vertical divider */}
-        <div className="absolute top-20 bottom-20 left-1/2 transform -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-purple-200 to-transparent"></div>
-      </div>
-
-      {/* LEFT SIDE - Admin Illustration */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 lg:px-12 bg-gradient-to-br from-white to-gray-50">
-        <div className="w-full max-w-md flex flex-col items-center">
-          {/* Clickable Logo */}
-          <button
-            onClick={() => navigate("/")}
-            className="group relative mb-6"
-            aria-label="Go to home page"
-          >
-            <div className="absolute -inset-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full blur-lg opacity-30 group-hover:opacity-50 transition duration-300"></div>
-            <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-white to-gray-50 border-4 border-purple-200 group-hover:border-purple-400 p-3 shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110">
-              <img
-                src={bakilidLogo}
-                alt="Barangay Bakilid Logo"
-                className="w-full h-full object-contain"
-              />
+    <div className="min-h-screen bg-[#fafafa] text-neutral-900 font-sans flex flex-col justify-between relative overflow-hidden vercel-grid-pattern antialiased">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-neutral-200/80 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <button onClick={() => navigate("/")} className="flex items-center gap-3 group">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white p-1 shadow-xs transition group-hover:border-neutral-300">
+              <img src={bakilidLogo} alt="Bakilid Logo" className="h-full w-full object-contain" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold tracking-tight text-neutral-900">Barangay Bakilid</p>
+              <p className="text-[11px] font-medium text-blue-600">Admin Console</p>
             </div>
           </button>
 
-          {/* Branding */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">Barangay Bakilid</h2>
-            <p className="text-base text-purple-600 font-semibold">Administrative Portal</p>
-          </div>
-
-          {/* Admin Girl Illustration */}
-          <div className="relative w-full">
-            <div className="absolute -inset-8 bg-gradient-to-r from-purple-200 via-blue-200 to-purple-200 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '4s' }}></div>
-            <img 
-              src="/Admin-bro.png" 
-              alt="Admin Portal" 
-              className="relative w-full h-auto drop-shadow-2xl"
-            />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/login")}
+              className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 shadow-2xs transition hover:bg-neutral-50 hover:text-neutral-900"
+            >
+              <User className="h-3.5 w-3.5 text-neutral-500" />
+              Resident Portal
+            </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* RIGHT SIDE - Login Form */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-8 lg:px-12 bg-white">
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-md">
-          {/* Badge */}
-          <div className="flex justify-center mb-5">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-full border-2 border-purple-200 shadow-lg">
-              <div className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></div>
-              <span className="text-xs font-semibold text-purple-700">Admin Access Portal</span>
+          {/* Card Container */}
+          <div className="rounded-2xl border border-neutral-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-neutral-900/5 backdrop-blur-xl">
+            {/* Header Badge */}
+            <div className="flex justify-center mb-6">
+              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-semibold text-neutral-800">
+                <Lock className="h-3.5 w-3.5 text-blue-600" />
+                Administrative Access
+              </span>
             </div>
-          </div>
 
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="inline-block p-3 mb-3 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl shadow-lg">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-xl">
-                <Lock className="w-6 h-6 text-white" />
+            {/* Title */}
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                Admin Console
+              </h1>
+              <p className="mt-2 text-sm text-neutral-500">
+                Sign in with your official staff credentials
+              </p>
+            </div>
+
+            {/* Error banner */}
+            {error && (
+              <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 text-xs font-medium text-rose-700">
+                {error}
               </div>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2 tracking-tight">
-              Login as <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Admin</span>
-            </h1>
-            <p className="text-gray-500 text-sm">Access the administrative dashboard securely</p>
-          </div>
+            )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border-2 border-red-200 animate-slideIn shadow-lg">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-red-600"></div>
-                </div>
-                <p className="text-sm text-red-800 font-medium">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 ml-1">Admin Email Address</label>
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition duration-300"></div>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">
+                  Official Email Address
+                </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400 group-focus-within:text-purple-600 transition-colors" />
-                  </div>
                   <input
                     type="email"
                     required
@@ -202,28 +134,19 @@ export default function AdminLogin() {
                     placeholder="admin@bakilid.gov.ph"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="relative w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-950 placeholder:text-neutral-400 outline-none transition focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 disabled:opacity-50"
                   />
+                  <User className="absolute right-4 top-3.5 h-4 w-4 text-neutral-400" />
                 </div>
               </div>
-              <p className="text-xs text-gray-500 ml-1">Use your official admin email address</p>
-            </div>
 
-            {/* Password */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 ml-1">Password</label>
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl opacity-0 group-focus-within:opacity-100 blur transition duration-300"></div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-600">
+                    Password
+                  </label>
+                </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 right-4 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-400 hover:text-purple-600 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     required
@@ -231,104 +154,74 @@ export default function AdminLogin() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="relative w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed pr-12"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 pr-11 text-sm text-neutral-950 placeholder:text-neutral-400 outline-none transition focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 disabled:opacity-50"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-3.5 text-neutral-400 hover:text-neutral-700 transition"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* Turnstile Widget */}
-            <div className="flex justify-center">
-              {isTurnstileAvailable ? (
-                <Turnstile
-                  ref={turnstileRef}
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onSuccess={(token) => setTurnstileToken(token)}
-                  onError={() => {
-                    setTurnstileToken("");
-                    setError("Verification failed. Please try again.");
-                  }}
-                  onExpire={() => {
-                    setTurnstileToken("");
-                    setError("Verification expired. Please verify again.");
-                  }}
-                  options={{
-                    theme: "light",
-                    size: "normal",
-                  }}
-                />
-              ) : (
-                <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600 font-medium">Security verification unavailable</p>
-                </div>
-              )}
-            </div>
+              {/* Turnstile Widget */}
+              <div className="flex flex-col items-center pt-2">
+                {isTurnstileAvailable ? (
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onError={() => {
+                      setTurnstileToken("");
+                      setError("Verification failed. Please try again.");
+                    }}
+                    onExpire={() => {
+                      setTurnstileToken("");
+                      setError("Verification expired. Please verify again.");
+                    }}
+                    options={{ theme: "light", size: "normal" }}
+                  />
+                ) : (
+                  <div className="text-center p-3 bg-rose-50 border border-rose-200 rounded-xl w-full">
+                    <p className="text-xs text-rose-600 font-semibold">Security verification unavailable</p>
+                  </div>
+                )}
+              </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="relative w-full group mt-5"
-            >
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 rounded-xl blur-lg opacity-70 group-hover:opacity-100 transition duration-300 animate-gradient-x"></div>
-              <div className="relative bg-gradient-to-r from-[#4A1D6B] to-[#5A2D7B] text-white py-3.5 px-6 rounded-xl font-bold text-base hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] transform">
+              {/* Submit CTA Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group relative w-full inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-950 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 disabled:opacity-50"
+              >
                 {isLoading ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>Authenticating...</span>
                   </>
                 ) : (
                   <>
-                    <Lock className="w-5 h-5" />
-                    <span className="tracking-wide">ACCESS DASHBOARD</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <span>Access Admin Dashboard</span>
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </>
                 )}
-              </div>
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t-2 border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500 font-medium">or</span>
-            </div>
+              </button>
+            </form>
           </div>
 
-          {/* Resident Link */}
-          <button
-            onClick={() => navigate("/login")}
-            className="w-full py-3 px-6 rounded-xl border-2 border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 hover:border-purple-300 hover:text-purple-700 hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <User className="w-5 h-5" />
-            <span>Go to Resident Portal</span>
-          </button>
-
-          {/* Footer */}
-          <p className="text-center text-xs text-gray-500 mt-5">Protected by enterprise-grade security 🔐</p>
+          <div className="mt-6 text-center text-xs text-neutral-400 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-neutral-400" />
+            Protected by enterprise-grade security & audit logs
+          </div>
         </div>
-      </div>
+      </main>
 
-      <style>{`
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes gradient-x {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        .animate-slideIn {
-          animation: slideIn 0.3s ease-out;
-        }
-        .animate-gradient-x {
-          background-size: 200% 200%;
-          animation: gradient-x 3s ease infinite;
-        }
-      `}</style>
+      {/* Footer */}
+      <footer className="py-4 text-center text-xs text-neutral-400 border-t border-neutral-200/60 bg-white/50">
+        &copy; 2026 Barangay Bakilid Administrative Console.
+      </footer>
     </div>
   );
 }
