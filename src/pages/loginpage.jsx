@@ -81,16 +81,6 @@ export default function LoginPage() {
               <p className="text-[11px] font-medium text-neutral-500">Resident Portal</p>
             </div>
           </button>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/admin/login")}
-              className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 shadow-2xs transition hover:bg-neutral-50 hover:text-neutral-900"
-            >
-              <Lock className="h-3.5 w-3.5 text-neutral-500" />
-              Admin Login
-            </button>
-          </div>
         </div>
       </header>
 
