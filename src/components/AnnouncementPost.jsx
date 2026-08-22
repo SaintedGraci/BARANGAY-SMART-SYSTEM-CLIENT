@@ -1,18 +1,121 @@
 import { useState, useEffect } from 'react';
-import { Edit3, Trash2, Pin, Archive, MoreVertical, ThumbsUp, MessageSquare, X, Send } from 'lucide-react';
+import {
+  Edit3, Trash2, Pin, Archive, MoreHorizontal,
+  ThumbsUp, MessageSquare, X, Send, Globe, Clock,
+  AlertTriangle, Info, Star, Calendar, Megaphone
+} from 'lucide-react';
 import OptimizedImage from './ui/OptimizedImage';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { cn } from '../lib/utils';
 import { announcementsAPI } from '../services/api';
 
-// Priority badges with modern styling
-const PRIORITY_CONFIG = {
-  Urgent: { emoji: '🔴', label: 'EMERGENCY', className: 'bg-rose-100 text-rose-800 border-rose-300' },
-  High: { emoji: '🟠', label: 'IMPORTANT', className: 'bg-orange-100 text-orange-800 border-orange-300' },
-  Medium: { emoji: '🔵', label: 'ADVISORY', className: 'bg-blue-100 text-blue-800 border-blue-300' },
-  Low: { emoji: '⚪', label: 'GENERAL', className: 'bg-slate-100 text-slate-700 border-slate-300' },
+// ─── Category / Priority config ──────────────────────────────────────────────
+const CATEGORY_CONFIG = {
+  Emergency: {
+    label: 'Emergency',
+    icon: AlertTriangle,
+    pill: 'bg-red-50 text-red-700 border-red-200',
+    accent: 'border-l-red-500',
+    dot: 'bg-red-500',
+    glow: 'shadow-red-100',
+  },
+  Important: {
+    label: 'Important',
+    icon: Star,
+    pill: 'bg-amber-50 text-amber-700 border-amber-200',
+    accent: 'border-l-amber-500',
+    dot: 'bg-amber-500',
+    glow: 'shadow-amber-100',
+  },
+  Events: {
+    label: 'Event',
+    icon: Calendar,
+    pill: 'bg-purple-50 text-purple-700 border-purple-200',
+    accent: 'border-l-purple-500',
+    dot: 'bg-purple-500',
+    glow: 'shadow-purple-100',
+  },
+  Advisories: {
+    label: 'Advisory',
+    icon: Info,
+    pill: 'bg-blue-50 text-blue-700 border-blue-200',
+    accent: 'border-l-blue-400',
+    dot: 'bg-blue-400',
+    glow: 'shadow-blue-100',
+  },
+  General: {
+    label: 'General',
+    icon: Megaphone,
+    pill: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    accent: 'border-l-emerald-500',
+    dot: 'bg-emerald-500',
+    glow: 'shadow-emerald-100',
+  },
 };
 
-export default function AnnouncementPost({ announcement, userRole, onEdit, onDelete, onPin, onArchive, isFirstFew = false }) {
-  const [showMenu, setShowMenu] = useState(false);
+// Map legacy priority → category key
+const PRIORITY_TO_CATEGORY = {
+  Urgent: 'Emergency',
+  High: 'Important',
+  Medium: 'Advisories',
+  Low: 'General',
+};
+
+function resolveCategory(announcement) {
+  if (announcement.category && CATEGORY_CONFIG[announcement.category]) {
+    return announcement.category;
+  }
+  return PRIORITY_TO_CATEGORY[announcement.priority] || 'General';
+}
+
+// ─── Time formatter ───────────────────────────────────────────────────────────
+function formatPostTime(date) {
+  const now = new Date();
+  const postDate = new Date(date);
+  const diffMs = now - postDate;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return postDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: postDate.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+  });
+}
+
+// ─── Reaction animation component ─────────────────────────────────────────────
+function HelpfulBubble({ show }) {
+  if (!show) return null;
+  return (
+    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-emerald-600 animate-bounce pointer-events-none select-none">
+      +1 👍
+    </span>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+export default function AnnouncementPost({
+  announcement,
+  userRole,
+  onEdit,
+  onDelete,
+  onPin,
+  onArchive,
+  isFirstFew = false,
+}) {
   const [expanded, setExpanded] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -22,8 +125,27 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
   const [newComment, setNewComment] = useState('');
   const [loadingReaction, setLoadingReaction] = useState(false);
   const [loadingComment, setLoadingComment] = useState(false);
+  const [showBubble, setShowBubble] = useState(false);
 
-  // Initialize reaction state from announcement prop
+  const isAdmin = ['admin', 'captain', 'secretary'].includes(userRole);
+  const categoryKey = resolveCategory(announcement);
+  const catConfig = CATEGORY_CONFIG[categoryKey];
+  const CategoryIcon = catConfig.icon;
+
+  const isLongContent = announcement.description.length > 280;
+  const displayContent =
+    expanded || !isLongContent
+      ? announcement.description
+      : announcement.description.substring(0, 280) + '…';
+
+  const isVideo = (path) => {
+    if (!path) return false;
+    return ['.mp4', '.webm', '.ogg', '.mov'].some((ext) =>
+      path.toLowerCase().endsWith(ext)
+    );
+  };
+
+  // ── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (announcement) {
       setIsHelpful(announcement.isHelpful || false);
@@ -32,54 +154,45 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
   }, [announcement?.id, announcement?.isHelpful, announcement?.helpfulCount]);
 
   useEffect(() => {
-    if (announcement?.id) {
-      fetchComments(); // Fetch comments on mount
-    }
+    if (announcement?.id) fetchComments();
   }, [announcement?.id]);
 
   useEffect(() => {
-    if (showComments && announcement?.id) {
-      fetchComments(); // Refresh when opening comments
-    }
+    if (showComments && announcement?.id) fetchComments();
   }, [showComments, announcement?.id]);
 
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const fetchComments = async () => {
     try {
-      const response = await announcementsAPI.getComments(announcement.id);
-      setComments(response.data.data.comments);
-    } catch (error) {
-      console.error('Error fetching comments:', error);
+      const res = await announcementsAPI.getComments(announcement.id);
+      setComments(res.data.data.comments);
+    } catch (err) {
+      console.error('Fetch comments error:', err);
     }
   };
 
   const handleReaction = async () => {
     if (loadingReaction) return;
-    
     setLoadingReaction(true);
-    
-    // Save current state for rollback
-    const previousIsHelpful = isHelpful;
-    const previousCount = helpfulCount;
-    
-    // Optimistic update
+
+    const prev = isHelpful;
+    const prevCount = helpfulCount;
     setIsHelpful(!isHelpful);
     setHelpfulCount(isHelpful ? helpfulCount - 1 : helpfulCount + 1);
-    
+
+    if (!isHelpful) {
+      setShowBubble(true);
+      setTimeout(() => setShowBubble(false), 1200);
+    }
+
     try {
-      const response = await announcementsAPI.toggleReaction(announcement.id);
-      
-      // Update with server response
-      setIsHelpful(response.data.data.isHelpful);
-      setHelpfulCount(response.data.data.helpfulCount);
-      
-    } catch (error) {
-      console.error('Error toggling reaction:', error);
-      
-      // Rollback on error
-      setIsHelpful(previousIsHelpful);
-      setHelpfulCount(previousCount);
-      
-      // TODO: Show error toast/notification
+      const res = await announcementsAPI.toggleReaction(announcement.id);
+      setIsHelpful(res.data.data.isHelpful);
+      setHelpfulCount(res.data.data.helpfulCount);
+    } catch (err) {
+      console.error('Reaction error:', err);
+      setIsHelpful(prev);
+      setHelpfulCount(prevCount);
     } finally {
       setLoadingReaction(false);
     }
@@ -88,14 +201,13 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim() || loadingComment) return;
-
     setLoadingComment(true);
     try {
       await announcementsAPI.addComment(announcement.id, newComment.trim());
       setNewComment('');
       await fetchComments();
-    } catch (error) {
-      console.error('Error adding comment:', error);
+    } catch (err) {
+      console.error('Add comment error:', err);
     } finally {
       setLoadingComment(false);
     }
@@ -105,208 +217,182 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
     try {
       await announcementsAPI.deleteComment(announcement.id, commentId);
       await fetchComments();
-    } catch (error) {
-      console.error('Error deleting comment:', error);
+    } catch (err) {
+      console.error('Delete comment error:', err);
     }
   };
 
-  const isAdmin = ['admin', 'captain', 'secretary'].includes(userRole);
-  const priorityConfig = PRIORITY_CONFIG[announcement.priority] || PRIORITY_CONFIG.Low;
-  
-  // Determine if content should be expandable (more than 300 chars)
-  const isLongContent = announcement.description.length > 300;
-  const displayContent = (expanded || !isLongContent) 
-    ? announcement.description 
-    : announcement.description.substring(0, 300) + '...';
-
-  const formatPostTime = (date) => {
-    const now = new Date();
-    const postDate = new Date(date);
-    const diffMs = now - postDate;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    
-    return postDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: postDate.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
-    });
-  };
-
-  const handleMenuAction = (action) => {
-    setShowMenu(false);
-    switch(action) {
-      case 'edit': onEdit?.(announcement); break;
-      case 'pin': onPin?.(announcement); break;
-      case 'archive': onArchive?.(announcement); break;
-      case 'delete': onDelete?.(announcement); break;
-    }
-  };
-
-  const isVideo = (path) => {
-    if (!path) return false;
-    const videoExts = ['.mp4', '.webm', '.ogg', '.mov'];
-    return videoExts.some(ext => path.toLowerCase().endsWith(ext));
-  };
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      <article className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        {/* Post Header */}
-        <div className="p-4 sm:p-5">
-          <div className="flex items-start gap-3">
-            {/* Avatar */}
-            <div className="flex-shrink-0">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                BB
-              </div>
+      {/* ── Card ── */}
+      <article
+        className={cn(
+          'group relative bg-white rounded-2xl border border-slate-200/80',
+          'shadow-sm hover:shadow-lg transition-all duration-300',
+          'border-l-4',
+          catConfig.accent,
+          catConfig.glow && `hover:${catConfig.glow}`,
+          announcement.isPinned && 'ring-2 ring-blue-200 ring-offset-1'
+        )}
+      >
+        {/* ── Pinned banner ── */}
+        {announcement.isPinned && (
+          <div className="flex items-center gap-2 px-4 pt-3 pb-0 text-xs font-semibold text-blue-600">
+            <Pin className="w-3.5 h-3.5 fill-blue-500" />
+            Pinned Post
+          </div>
+        )}
+
+        {/* ── Header ── */}
+        <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-0 sm:px-5">
+          <div className="flex items-center gap-3">
+            {/* Official barangay avatar */}
+            <div className="relative">
+              <Avatar className="w-11 h-11 ring-2 ring-emerald-500/30">
+                <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-bold text-sm">
+                  BB
+                </AvatarFallback>
+              </Avatar>
+              {/* Online-style verified dot */}
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
             </div>
 
-            {/* Header Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-slate-900 text-sm sm:text-base">Barangay Bakilid</h4>
-                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                      <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-                      Official Announcement
-                    </span>
-                    <span className="text-xs text-slate-500">·</span>
-                    <span className="text-xs text-slate-500">{formatPostTime(announcement.createdAt)}</span>
-                    {announcement.updatedAt !== announcement.createdAt && (
-                      <>
-                        <span className="text-xs text-slate-400">· Edited</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Admin Menu */}
-                {isAdmin && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowMenu(!showMenu)}
-                      className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                      aria-label="More options"
-                    >
-                      <MoreVertical className="w-5 h-5 text-slate-500" />
-                    </button>
-                    
-                    {showMenu && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-10" 
-                          onClick={() => setShowMenu(false)}
-                        />
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-20">
-                          <button
-                            onClick={() => handleMenuAction('edit')}
-                            className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                            Edit Announcement
-                          </button>
-                          {announcement.isPinned ? (
-                            <button
-                              onClick={() => handleMenuAction('pin')}
-                              className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                            >
-                              <Pin className="w-4 h-4" />
-                              Unpin Announcement
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleMenuAction('pin')}
-                              className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                            >
-                              <Pin className="w-4 h-4" />
-                              Pin Announcement
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleMenuAction('archive')}
-                            className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <Archive className="w-4 h-4" />
-                            Archive Announcement
-                          </button>
-                          <hr className="my-1 border-slate-200" />
-                          <button
-                            onClick={() => handleMenuAction('delete')}
-                            className="w-full px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50 flex items-center gap-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete Announcement
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-bold text-slate-900 text-sm leading-tight">
+                  Barangay Bakilid
+                </span>
+                {/* Official badge */}
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold">
+                  <Globe className="w-2.5 h-2.5" />
+                  Official
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500">
+                <Clock className="w-3 h-3" />
+                <span>{formatPostTime(announcement.createdAt)}</span>
+                {announcement.updatedAt !== announcement.createdAt && (
+                  <span className="text-slate-400">· Edited</span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Priority Badge & Title */}
-          <div className="mt-4">
-            {announcement.isPinned && (
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 mb-2">
-                <Pin className="w-3.5 h-3.5 fill-blue-700" />
-                Pinned
-              </div>
-            )}
-            
-            {announcement.priority && announcement.priority !== 'Low' && (
-              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border mb-3 ${priorityConfig.className}`}>
-                <span>{priorityConfig.emoji}</span>
-                {priorityConfig.label}
-              </div>
-            )}
+          {/* Category pill */}
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border',
+                catConfig.pill
+              )}
+            >
+              <CategoryIcon className="w-3 h-3" />
+              {catConfig.label}
+            </span>
 
-            <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
-              {announcement.title}
-            </h3>
-          </div>
-
-          {/* Content */}
-          <div className="mt-3">
-            <p className="text-slate-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
-              {displayContent}
-            </p>
-            {isLongContent && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="mt-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
-              >
-                {expanded ? 'See less' : 'See more'}
-              </button>
+            {/* Admin actions dropdown */}
+            {isAdmin && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none"
+                    aria-label="More options"
+                  >
+                    <MoreHorizontal className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => onEdit?.(announcement)}
+                    className="text-slate-700"
+                  >
+                    <Edit3 className="w-4 h-4 text-slate-500" />
+                    Edit Announcement
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onPin?.(announcement)}
+                    className="text-slate-700"
+                  >
+                    <Pin className="w-4 h-4 text-slate-500" />
+                    {announcement.isPinned ? 'Unpin Post' : 'Pin to Top'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onArchive?.(announcement)}
+                    className="text-slate-700"
+                  >
+                    <Archive className="w-4 h-4 text-slate-500" />
+                    Archive Post
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDelete?.(announcement)}
+                    className="text-red-600 focus:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Post
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
 
-        {/* Media */}
+        {/* ── Category pill (mobile only) ── */}
+        <div className="sm:hidden px-4 pt-2">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border',
+              catConfig.pill
+            )}
+          >
+            <CategoryIcon className="w-3 h-3" />
+            {catConfig.label}
+          </span>
+        </div>
+
+        {/* ── Title & Body ── */}
+        <div className="px-4 pt-3 pb-0 sm:px-5">
+          <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug mb-2">
+            {announcement.title}
+          </h3>
+          <p className="text-sm sm:text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap">
+            {displayContent}
+          </p>
+          {isLongContent && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-1.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+            >
+              {expanded ? 'See less' : 'See more'}
+            </button>
+          )}
+        </div>
+
+        {/* ── Media ── */}
         {(announcement.imagePath || announcement.mediumUrl || announcement.largeUrl) && (
-          <div className="relative bg-slate-50">
+          <div className="mt-3 overflow-hidden bg-slate-50">
             {isVideo(announcement.imagePath || announcement.largeUrl) ? (
               <video
                 controls
-                className="w-full max-h-[600px]"
-                poster={(announcement.imagePath || announcement.largeUrl).replace(/\.[^/.]+$/, '') + '-thumb.jpg'}
+                className="w-full max-h-[560px]"
+                poster={
+                  (announcement.imagePath || announcement.largeUrl).replace(
+                    /\.[^/.]+$/,
+                    ''
+                  ) + '-thumb.jpg'
+                }
               >
-                <source src={announcement.imagePath || announcement.largeUrl} type="video/mp4" />
-                Your browser does not support the video tag.
+                <source
+                  src={announcement.imagePath || announcement.largeUrl}
+                  type="video/mp4"
+                />
               </video>
             ) : (
-              <div 
-                className="cursor-pointer"
+              <button
+                className="w-full block focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 onClick={() => setShowLightbox(true)}
+                aria-label="View full image"
               >
                 <OptimizedImage
                   src={announcement.mediumUrl || announcement.imagePath || announcement.largeUrl}
@@ -320,153 +406,178 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
                   width="800"
                   height="600"
                   eager={isFirstFew}
-                  className="w-full max-h-[600px] object-cover"
-                  onError={(e) => {
-                    console.error('Failed to load image:', announcement.imagePath);
-                  }}
+                  className="w-full max-h-[560px] object-cover hover:brightness-95 transition-[filter] duration-200"
+                  onError={() => console.error('Failed to load image:', announcement.imagePath)}
                 />
-              </div>
+              </button>
             )}
           </div>
         )}
 
-        {/* Post Footer - Interactions with Green Branding */}
-        <div className="border-t border-slate-200 px-4 sm:px-5 py-3">
-          {/* Reaction & Comment Summary Line - Always visible */}
-          <div className="flex items-center justify-between text-sm mb-3 px-1 min-h-[20px]">
-            <div className="flex items-center gap-1.5">
-              {helpfulCount > 0 && (
-                <>
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500">
-                    <ThumbsUp className="w-3 h-3 fill-white text-white" />
-                  </span>
-                  <span className="text-slate-600 font-medium">{helpfulCount}</span>
-                </>
-              )}
-            </div>
-            <button
-              onClick={() => setShowComments(!showComments)}
-              className="text-slate-600 hover:underline font-medium"
-            >
-              {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
-            </button>
+        {/* ── Reaction + comment tally bar ── */}
+        <div className="flex items-center justify-between px-4 sm:px-5 pt-3 pb-1 text-sm text-slate-500">
+          <div className="flex items-center gap-1.5">
+            {helpfulCount > 0 && (
+              <>
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 shadow-sm">
+                  <ThumbsUp className="w-3 h-3 fill-white text-white" />
+                </span>
+                <span className="font-medium text-slate-600">{helpfulCount}</span>
+              </>
+            )}
           </div>
-          
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1 sm:gap-2 border-t border-slate-100 pt-2">
-            <button 
-              onClick={handleReaction}
-              disabled={loadingReaction}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed ${
-                isHelpful 
-                  ? 'text-green-600 bg-green-50 hover:bg-green-100' 
-                  : 'text-gray-600 bg-gray-50 hover:bg-gray-100'
-              }`}
-            >
-              <ThumbsUp 
-                className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-200 ${
-                  isHelpful ? 'fill-green-600 text-green-600' : 'text-gray-600'
-                }`} 
-              />
-              <span className={isHelpful ? 'text-green-600' : 'text-gray-600'}>
-                Helpful
-              </span>
-            </button>
-            <button 
-              onClick={() => setShowComments(!showComments)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-all duration-200 ease-in-out"
-            >
-              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Comment</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="text-slate-500 hover:text-slate-800 hover:underline transition-colors text-xs font-medium"
+          >
+            {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+          </button>
         </div>
 
-        {/* Progressive Comment Section - Hidden by Default */}
+        {/* ── Divider ── */}
+        <div className="mx-4 sm:mx-5 border-t border-slate-100" />
+
+        {/* ── Action buttons ── */}
+        <div className="flex items-center px-2 sm:px-3 py-1">
+          {/* Helpful */}
+          <div className="relative flex-1">
+            <HelpfulBubble show={showBubble} />
+            <button
+              onClick={handleReaction}
+              disabled={loadingReaction}
+              className={cn(
+                'w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-semibold',
+                'transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
+                isHelpful
+                  ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              )}
+            >
+              <ThumbsUp
+                className={cn(
+                  'w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200',
+                  isHelpful
+                    ? 'fill-emerald-600 text-emerald-600 scale-110'
+                    : 'text-slate-500'
+                )}
+              />
+              <span>Helpful</span>
+            </button>
+          </div>
+
+          {/* Comment */}
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className={cn(
+              'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-semibold',
+              'transition-all duration-200',
+              showComments
+                ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            )}
+          >
+            <MessageSquare
+              className={cn(
+                'w-4 h-4 sm:w-5 sm:h-5 transition-colors',
+                showComments ? 'text-blue-600' : 'text-slate-500'
+              )}
+            />
+            <span>Comment</span>
+          </button>
+        </div>
+
+        {/* ── Comment section ── */}
         {showComments && (
-          <div className="border-t border-slate-200 px-4 sm:px-5 py-4 bg-slate-50">
-            {/* Comment Input Area with Avatar */}
-            <form onSubmit={handleAddComment} className="mb-4">
-              <div className="flex items-start gap-2 sm:gap-3">
-                {/* Current User Avatar */}
-                <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
+          <div className="border-t border-slate-100 bg-slate-50/60 rounded-b-2xl px-4 sm:px-5 py-4 space-y-4">
+            {/* Input row */}
+            <form onSubmit={handleAddComment} className="flex items-center gap-2.5">
+              <Avatar className="w-8 h-8 shrink-0">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs font-bold">
                   {userRole ? userRole.charAt(0).toUpperCase() : 'U'}
-                </div>
-                
-                {/* Comment Input */}
-                <div className="flex-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 px-3 sm:px-4 py-2 border border-slate-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm bg-white transition-all"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newComment.trim() || loadingComment}
-                    className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                  >
-                    {loadingComment ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-emerald-400 focus-within:border-transparent transition-all">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write a comment…"
+                  className="flex-1 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
+                />
+                <button
+                  type="submit"
+                  disabled={!newComment.trim() || loadingComment}
+                  className={cn(
+                    'p-1.5 rounded-full transition-all duration-200',
+                    newComment.trim()
+                      ? 'text-emerald-600 hover:bg-emerald-50'
+                      : 'text-slate-300 cursor-not-allowed'
+                  )}
+                  aria-label="Post comment"
+                >
+                  {loadingComment ? (
+                    <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </form>
 
-            {/* Comments List with Avatars */}
+            {/* Comments list */}
             <div className="space-y-3">
               {comments.length === 0 ? (
-                <div className="text-center py-6">
-                  <MessageSquare className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">No comments yet. Be the first to comment!</p>
+                <div className="py-6 text-center">
+                  <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-400">No comments yet. Be the first!</p>
                 </div>
               ) : (
                 comments.map((comment) => {
-                  const userName = comment.user?.fullName || comment.user?.username || 'Unknown User';
-                  const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                  
+                  const userName =
+                    comment.user?.fullName || comment.user?.username || 'Unknown';
+                  const initials = userName
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+
                   return (
-                    <div key={comment.id} className="flex items-start gap-2 sm:gap-3">
-                      {/* Commenter Avatar */}
-                      <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs">
-                        {userInitials}
-                      </div>
-                      
-                      {/* Comment Bubble */}
+                    <div key={comment.id} className="flex items-start gap-2.5 group/comment">
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xs font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+
                       <div className="flex-1 min-w-0">
-                        <div className="bg-slate-100 rounded-2xl px-3 sm:px-4 py-2 sm:py-3">
+                        <div className="bg-white border border-slate-200/80 rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-slate-900 truncate">
+                              <p className="text-xs font-bold text-slate-800 truncate">
                                 {userName}
                               </p>
-                              <p className="text-sm text-slate-700 mt-0.5 break-words">{comment.comment}</p>
+                              <p className="text-sm text-slate-700 mt-0.5 break-words leading-relaxed">
+                                {comment.comment}
+                              </p>
                             </div>
-                            
-                            {/* Delete Button for Own Comments or Admin */}
-                            {(isAdmin || comment.userId === comment.user?.id) && (
+                            {isAdmin && (
                               <button
                                 onClick={() => handleDeleteComment(comment.id)}
-                                className="flex-shrink-0 p-1 text-slate-400 hover:text-rose-600 transition-colors rounded"
+                                className="flex-shrink-0 p-1 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover/comment:opacity-100"
                                 aria-label="Delete comment"
                               >
-                                <X className="w-4 h-4" />
+                                <X className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
                         </div>
-                        
-                        {/* Timestamp */}
-                        <p className="text-xs text-slate-500 mt-1 px-2">
+                        <p className="text-[11px] text-slate-400 mt-1 px-1">
                           {new Date(comment.createdAt).toLocaleString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
                           })}
                         </p>
                       </div>
@@ -479,24 +590,23 @@ export default function AnnouncementPost({ announcement, userRole, onEdit, onDel
         )}
       </article>
 
-      {/* Image Lightbox */}
+      {/* ── Lightbox ── */}
       {showLightbox && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
           onClick={() => setShowLightbox(false)}
         >
           <button
-            className="absolute top-4 right-4 text-white hover:text-slate-300 p-2"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
             onClick={() => setShowLightbox(false)}
+            aria-label="Close"
           >
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-6 h-6" />
           </button>
           <img
             src={announcement.largeUrl || announcement.imagePath || announcement.mediumUrl}
             alt={announcement.title}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
