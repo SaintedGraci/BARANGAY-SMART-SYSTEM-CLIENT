@@ -34,7 +34,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { requestsAPI, announcementsAPI, complaintsAPI } from '../services/api';
 import { Button } from '../components/ui/button';
-import { DocumentListModal } from '../components/ui/documentlistmodal';
+import { RequestDocumentFlow } from '../components/ui/RequestDocumentFlow';
 import DateTimeWidget from '../components/DateTimeWidget';
 import WeatherWidget from '../components/WeatherWidget';
 import ResidentProfile from '../components/ResidentProfile';
@@ -245,7 +245,7 @@ function HotlineCard({ hotline, compact = false }) {
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useSocket();
+  const { socket, notifications, unreadCount, markAsRead, markAllAsRead } = useSocket();
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [complaints, setComplaints] = useState([]);
@@ -283,6 +283,34 @@ export default function Dashboard() {
       fetchData();
     }
   }, [notifications]);
+
+  // TASK16: Socket.IO listener for document service updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleDocumentServiceUpdate = (data) => {
+      console.log('🔄 Document service updated:', data);
+      
+      // Show notification to user
+      if (data.action === 'created') {
+        console.log(`✅ New document service available: ${data.service.name}`);
+        // You could show a toast notification here
+      } else if (data.action === 'updated') {
+        console.log(`📝 Document service updated: ${data.service.name}`);
+      } else if (data.action === 'deleted') {
+        console.log(`🗑️ Document service removed: ${data.service.name}`);
+      }
+      
+      // The DocumentListModal will automatically refresh when opened
+      // since it fetches fresh data from the API
+    };
+
+    socket.on('document_service_updated', handleDocumentServiceUpdate);
+
+    return () => {
+      socket.off('document_service_updated', handleDocumentServiceUpdate);
+    };
+  }, [socket]);
 
   const fetchData = async () => {
     try {
@@ -347,6 +375,20 @@ export default function Dashboard() {
   const handleRequestClick = (request) => {
     setSelectedRequest(request);
     setIsRequestDetailOpen(true);
+  };
+
+  const handleDeleteRequest = async (requestId) => {
+    try {
+      await requestsAPI.delete(requestId);
+      // Refresh the requests list
+      fetchData();
+      // Show success message
+      alert('Request deleted successfully');
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to delete request. Please try again.';
+      alert(errorMessage);
+    }
   };
 
   const handleCloseRequestDetail = () => {
@@ -778,6 +820,7 @@ export default function Dashboard() {
               requests={requests}
               onRequestClick={handleRequestClick}
               onNewRequest={() => setIsDocumentListOpen(true)}
+              onDeleteRequest={handleDeleteRequest}
             />
           )}
 
@@ -881,11 +924,13 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* Document List Modal */}
-      <DocumentListModal 
+      {/* Request Document Flow Modal */}
+      <RequestDocumentFlow
         isOpen={isDocumentListOpen}
         onClose={() => setIsDocumentListOpen(false)}
-        onSelectDocument={handleDocumentSelect}
+        onSuccess={() => {
+          fetchData(); // Refresh all data including requests list
+        }}
       />
 
       {/* Request Modal */}

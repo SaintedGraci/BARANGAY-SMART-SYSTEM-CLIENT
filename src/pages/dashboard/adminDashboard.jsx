@@ -37,6 +37,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { requestsAPI, residentsAPI, announcementsAPI, logsAPI, complaintsAPI } from '../../services/api';
 import AnalyticsTab from './AnalyticsTab';
 import UserManagementTab from './UserManagementTab';
@@ -275,7 +276,8 @@ function ResidentStatusBadge({ isVerified }) {
 }
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+  const { socket } = useSocket();
   const navigate = useNavigate();
   
   // RBAC: Define role permissions
@@ -423,6 +425,72 @@ export default function AdminDashboard() {
       fetchLogs();
     }
   }, [activeTab, selectedLogFile, logFilter, logSearch]);
+
+  // TASK16: Socket.IO listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for role permission changes
+    const handleRolePermissionChange = async (data) => {
+      console.log('🔄 Role permissions changed:', data);
+      
+      // If current user's role was affected, refresh their view
+      if (data.role === userRole) {
+        console.log('⚡ Current user role affected - refreshing data');
+        
+        // Refresh user data from server to get latest role/permissions
+        await refreshUser();
+        
+        fetchData();
+        
+        // Show notification
+        alert(`Your permissions have been updated. Some features may now be ${data.action === 'granted' ? 'available' : 'restricted'}.`);
+      }
+    };
+
+    // Listen for UI refresh requirements
+    const handleUIRefresh = (data) => {
+      console.log('🔄 UI refresh required:', data.component);
+      
+      // Refresh relevant data based on component
+      switch (data.component) {
+        case 'announcements':
+          if (activeTab === 'announcements') {
+            fetchAnnouncements();
+          }
+          break;
+        case 'requests':
+          if (activeTab === 'requests') {
+            fetchData();
+          }
+          break;
+        case 'residents':
+          if (activeTab === 'residents' || activeTab === 'verifications') {
+            fetchData();
+            fetchPendingVerifications();
+          }
+          break;
+        case 'system_settings':
+        case 'feature_flags':
+          // Could refresh system config if needed
+          console.log('System configuration updated');
+          break;
+        default:
+          // General refresh
+          fetchData();
+      }
+    };
+
+    // Register listeners
+    socket.on('role_permissions_changed', handleRolePermissionChange);
+    socket.on('ui_refresh_required', handleUIRefresh);
+
+    // Cleanup
+    return () => {
+      socket.off('role_permissions_changed', handleRolePermissionChange);
+      socket.off('ui_refresh_required', handleUIRefresh);
+    };
+  }, [socket, userRole, activeTab]);
 
   const fetchPendingVerifications = async () => {
     setLoadingVerifications(true);

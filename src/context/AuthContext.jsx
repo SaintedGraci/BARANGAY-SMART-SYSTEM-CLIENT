@@ -70,8 +70,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // TASK16: Refresh user data from server (for permission updates)
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+
+      // Fetch fresh user data from server
+      const response = await authAPI.getCurrentUser();
+      const freshUser = response.data.user;
+      
+      // Update localStorage and state
+      localStorage.setItem('user', JSON.stringify(freshUser));
+      setUser(freshUser);
+      
+      console.log('✅ User data refreshed successfully');
+      return true;
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

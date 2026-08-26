@@ -158,9 +158,13 @@ export const requestsAPI = {
   getAll: () => api.get('/requests'),
   getById: (id) => api.get(`/requests/${id}`),
   create: (data) => api.post('/requests', data),
+  createRequest: (data) => api.post('/requests', data), // Alias for create
   update: (id, data) => api.put(`/requests/${id}`, data),
   delete: (id) => api.delete(`/requests/${id}`),
 };
+
+// Alias for convenience
+export const requestAPI = requestsAPI;
 
 // Announcements API
 export const announcementsAPI = {
@@ -224,6 +228,7 @@ export const residentsAPI = {
   getPendingVerifications: () => api.get('/residents/pending-verifications'),
   approve: (id) => api.put(`/residents/${id}/approve`),
   reject: (id, reason) => api.put(`/residents/${id}/reject`, { reason }),
+  getActiveDocumentServices: () => api.get('/residents/document-services'),
 };
 
 // Notifications API
@@ -263,6 +268,40 @@ export const userManagementAPI = {
   delete: (id) => api.delete(`/admin/users/${id}`),
   updateStatus: (id, status) => api.patch(`/admin/users/${id}/status`, { status }),
   resetPassword: (id, newPassword) => api.patch(`/admin/users/${id}/reset-password`, { newPassword }),
+};
+
+// Superadmin API (System Administrator only - TASK15)
+export const superadminAPI = {
+  // Dashboard & System Health
+  getDashboardStats: () => api.get('/superadmin/dashboard'),
+  
+  // Permissions Management
+  getAllPermissions: () => api.get('/superadmin/permissions'),
+  getPermissionMatrix: () => api.get('/superadmin/permissions/matrix'),
+  getRolePermissions: (role) => api.get(`/superadmin/permissions/${role}`),
+  updateRolePermissions: (role, permissions) => api.put(`/superadmin/permissions/${role}`, { permissions }),
+  
+  // Document Services Management
+  getAllDocumentServices: (params) => api.get('/superadmin/document-services', { params }),
+  getDocumentService: (id) => api.get(`/superadmin/document-services/${id}`),
+  createDocumentService: (data) => api.post('/superadmin/document-services', data),
+  updateDocumentService: (id, data) => api.put(`/superadmin/document-services/${id}`, data),
+  deleteDocumentService: (id) => api.delete(`/superadmin/document-services/${id}`),
+  
+  // System Settings Management
+  getAllSystemSettings: (params) => api.get('/superadmin/settings', { params }),
+  getSystemSetting: (key) => api.get(`/superadmin/settings/${key}`),
+  updateSystemSetting: (key, value) => api.put(`/superadmin/settings/${key}`, { value }),
+  bulkUpdateSystemSettings: (settings) => api.put('/superadmin/settings-bulk', { settings }),
+  
+  // Feature Flags Management
+  getAllFeatureFlags: () => api.get('/superadmin/feature-flags'),
+  getFeatureFlag: (key) => api.get(`/superadmin/feature-flags/${key}`),
+  toggleFeatureFlag: (key, isEnabled) => api.patch(`/superadmin/feature-flags/${key}/toggle`, { isEnabled }),
+  
+  // Audit Logs
+  getAuditLogs: (params) => api.get('/superadmin/audit-logs', { params }),
+  exportAuditLogs: (params) => api.get('/superadmin/audit-logs/export', { params }),
 };
 
 export default api;

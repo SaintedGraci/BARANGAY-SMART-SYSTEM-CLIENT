@@ -10,6 +10,7 @@ import TermsOfService from './pages/termsofservice';
 import PrivacyPolicy from './pages/privacypolicy';
 import Dashboard from './pages/dashboard';
 import AdminDashboard from './pages/dashboard/adminDashboard';
+import SuperadminDashboard from './pages/dashboard/SuperadminDashboard';
 import { ProtectedRoute } from './components/protectedRoute';
 
 const App: React.FC = () => {
@@ -29,8 +30,15 @@ const App: React.FC = () => {
                 <Dashboard />
               </ProtectedRoute>
             } />
+            {/* Superadmin Dashboard (admin role only) - TASK15 */}
+            <Route path="/superadmin/dashboard" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <SuperadminDashboard />
+              </ProtectedRoute>
+            } />
+            {/* Regular Admin Dashboard (captain, secretary, staff) */}
             <Route path="/admin/dashboard" element={
-              <ProtectedRoute allowedRoles={['admin', 'staff', 'secretary', 'captain']}>
+              <ProtectedRoute allowedRoles={['staff', 'secretary', 'captain']}>
                 <AdminDashboard />
               </ProtectedRoute>
             } />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   FileText,
@@ -12,8 +12,10 @@ import {
   ArrowRight,
   Info,
   ClipboardList,
+  Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { residentsAPI } from '../../services/api';
 
 interface DocumentListModalProps {
   isOpen: boolean;
@@ -22,13 +24,16 @@ interface DocumentListModalProps {
 }
 
 interface Document {
-  id: string;
+  id: string | number;
   name: string;
   description: string;
   icon: LucideIcon;
   color: string;
   requirements: string[];
   processingTime: string;
+  category?: string;
+  processingFee?: number;
+  isFree?: boolean;
 }
 
 export const DocumentListModal: React.FC<DocumentListModalProps> = ({
@@ -37,63 +42,64 @@ export const DocumentListModal: React.FC<DocumentListModalProps> = ({
   onSelectDocument,
 }) => {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const documents: Document[] = [
-    {
-      id: 'barangay-clearance',
-      name: 'Barangay Clearance',
-      description: 'Required for employment, business permits, and other legal purposes',
-      icon: Award,
-      color: 'from-blue-500 to-cyan-500',
-      requirements: ['Valid ID', 'Proof of Residency', 'Cedula (Community Tax Certificate)'],
-      processingTime: '3-5 business days',
-    },
-    {
-      id: 'certificate-of-residency',
-      name: 'Certificate of Residency',
-      description: 'Proof of residence for various transactions and applications',
-      icon: Home,
-      color: 'from-indigo-500 to-purple-500',
-      requirements: ['Valid ID', 'Proof of Address', 'Recent Utility Bill'],
-      processingTime: '2-3 business days',
-    },
-    {
-      id: 'indigency-certificate',
-      name: 'Indigency Certificate',
-      description: 'For financial assistance and medical purposes',
-      icon: BadgeDollarSign,
-      color: 'from-pink-500 to-rose-500',
-      requirements: ['Valid ID', 'Proof of Income', 'Medical Certificate (if applicable)'],
-      processingTime: '3-5 business days',
-    },
-    {
-      id: 'business-permit',
-      name: 'Business Permit',
-      description: 'Required to operate a business within the barangay',
-      icon: Building2,
-      color: 'from-green-500 to-emerald-500',
-      requirements: ['Business Registration', 'Valid ID', 'Barangay Clearance', 'Location Map'],
-      processingTime: '5-7 business days',
-    },
-    {
-      id: 'good-moral',
-      name: 'Certificate of Good Moral',
-      description: 'Character reference for employment or school requirements',
-      icon: ScrollText,
-      color: 'from-amber-500 to-orange-500',
-      requirements: ['Valid ID', 'Barangay Clearance', 'Police Clearance (optional)'],
-      processingTime: '3-5 business days',
-    },
-    {
-      id: 'cedula',
-      name: 'Community Tax Certificate (Cedula)',
-      description: 'Annual tax certificate for residents',
-      icon: FileText,
-      color: 'from-violet-500 to-purple-500',
-      requirements: ['Valid ID', 'Proof of Income', 'Previous Cedula (if renewal)'],
-      processingTime: '1-2 business days',
-    },
-  ];
+  // Map icon names to actual icon components
+  const iconMap: Record<string, LucideIcon> = {
+    Award,
+    Home,
+    BadgeDollarSign,
+    Building2,
+    ScrollText,
+    FileText,
+  };
+
+  // Map category to color gradients
+  const colorMap: Record<string, string> = {
+    Certificates: 'from-blue-500 to-cyan-500',
+    ID: 'from-indigo-500 to-purple-500',
+    Permits: 'from-green-500 to-emerald-500',
+    Business: 'from-amber-500 to-orange-500',
+    General: 'from-violet-500 to-purple-500',
+  };
+
+  // Fetch document services from API
+  useEffect(() => {
+    if (isOpen) {
+      fetchDocumentServices();
+    }
+  }, [isOpen]);
+
+  const fetchDocumentServices = async () => {
+    setLoading(true);
+    try {
+      const response = await residentsAPI.getActiveDocumentServices();
+      const services = response.data.data?.services || [];
+      
+      // Transform API data to match Document interface
+      const transformedDocs: Document[] = services.map((service: any) => ({
+        id: service.id,
+        name: service.name,
+        description: service.description || `Required for ${service.name}`,
+        icon: iconMap[service.icon || 'FileText'] || FileText,
+        color: colorMap[service.category] || 'from-slate-500 to-slate-600',
+        requirements: service.requirements ? service.requirements.split(',').map((r: string) => r.trim()) : ['Valid ID', 'Proof of Residency'],
+        processingTime: `${service.processingDays || 3}-${(service.processingDays || 3) + 2} business days`,
+        category: service.category,
+        processingFee: service.processingFee,
+        isFree: service.isFree,
+      }));
+
+      setDocuments(transformedDocs);
+    } catch (error) {
+      console.error('Error fetching document services:', error);
+      // Fallback to empty array
+      setDocuments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -144,50 +150,72 @@ export const DocumentListModal: React.FC<DocumentListModalProps> = ({
           
           {/* Left Grid: Document Options */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
-              {documents.map((doc) => {
-                const Icon = doc.icon;
-                const isSelected = selectedDoc?.id === doc.id;
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-3" />
+                <p className="text-sm text-slate-600">Loading document services...</p>
+              </div>
+            ) : documents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <FileText className="h-12 w-12 text-slate-300 mb-3" />
+                <p className="text-sm font-medium text-slate-700">No document services available</p>
+                <p className="text-xs text-slate-500 mt-1">Please contact the administrator</p>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+                {documents.map((doc) => {
+                  const Icon = doc.icon;
+                  const isSelected = selectedDoc?.id === doc.id;
 
-                return (
-                  <button
-                    key={doc.id}
-                    type="button"
-                    onClick={() => handleDocumentClick(doc)}
-                    className={`group relative rounded-xl sm:rounded-2xl border-2 p-3.5 sm:p-5 text-left transition-all ${
-                      isSelected
-                        ? 'scale-[1.01] border-blue-600 bg-blue-50/70 shadow-md ring-2 ring-blue-500/20'
-                        : 'border-slate-200 bg-white hover:border-blue-200 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3 sm:gap-4">
-                      <div
-                        className={`flex h-11 w-11 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${doc.color} text-white shadow-md transition group-hover:scale-105`}
-                      >
-                        <Icon className="h-5 w-5 sm:h-7 sm:w-7" />
+                  return (
+                    <button
+                      key={doc.id}
+                      type="button"
+                      onClick={() => handleDocumentClick(doc)}
+                      className={`group relative rounded-xl sm:rounded-2xl border-2 p-3.5 sm:p-5 text-left transition-all ${
+                        isSelected
+                          ? 'scale-[1.01] border-blue-600 bg-blue-50/70 shadow-md ring-2 ring-blue-500/20'
+                          : 'border-slate-200 bg-white hover:border-blue-200 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        <div
+                          className={`flex h-11 w-11 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${doc.color} text-white shadow-md transition group-hover:scale-105`}
+                        >
+                          <Icon className="h-5 w-5 sm:h-7 sm:w-7" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <h3 className="text-sm sm:text-base font-bold text-slate-900 transition group-hover:text-blue-700 truncate">
+                              {doc.name}
+                            </h3>
+                            {doc.isFree ? (
+                              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                                Free
+                              </span>
+                            ) : doc.processingFee && doc.processingFee > 0 ? (
+                              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                ₱{doc.processingFee}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="line-clamp-2 text-xs sm:text-sm text-slate-500">{doc.description}</p>
+                          <div className="mt-2.5 flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-400 font-medium">
+                            <Clock className="h-3.5 w-3.5 text-slate-400" />
+                            <span>{doc.processingTime}</span>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="absolute right-3 top-3 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
+                            <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </div>
+                        )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <h3 className="text-sm sm:text-base font-bold text-slate-900 transition group-hover:text-blue-700 truncate">
-                            {doc.name}
-                          </h3>
-                        </div>
-                        <p className="line-clamp-2 text-xs sm:text-sm text-slate-500">{doc.description}</p>
-                        <div className="mt-2.5 flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-400 font-medium">
-                          <Clock className="h-3.5 w-3.5 text-slate-400" />
-                          <span>{doc.processingTime}</span>
-                        </div>
-                      </div>
-                      {isSelected && (
-                        <div className="absolute right-3 top-3 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
-                          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right Panel: Selected Document Details & Proceed Button */}

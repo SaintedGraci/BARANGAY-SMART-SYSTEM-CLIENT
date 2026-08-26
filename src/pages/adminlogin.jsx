@@ -41,7 +41,12 @@ export default function AdminLogin() {
         const userData = JSON.parse(localStorage.getItem("user"));
 
         if (userData && ["admin", "staff", "secretary", "captain"].includes(userData.role)) {
-          navigate("/admin/dashboard");
+          // TASK15: Redirect admin role to Superadmin Dashboard
+          if (userData.role === "admin") {
+            navigate("/superadmin/dashboard");
+          } else {
+            navigate("/admin/dashboard");
+          }
         } else {
           setError("Access denied. Admin credentials required.");
           await logout();

@@ -12,7 +12,8 @@ import {
   ShieldCheck, 
   Briefcase,
   XCircle,
-  ClipboardList
+  ClipboardList,
+  Trash2
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
@@ -49,7 +50,7 @@ function getBadgeVariant(status) {
   }
 }
 
-export default function ResidentRequestsTab({ requests = [], onRequestClick, onNewRequest }) {
+export default function ResidentRequestsTab({ requests = [], onRequestClick, onNewRequest, onDeleteRequest }) {
   const [activeStatus, setActiveStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -162,66 +163,97 @@ export default function ResidentRequestsTab({ requests = [], onRequestClick, onN
             return (
               <Card
                 key={request.id}
-                onClick={() => onRequestClick?.(request)}
-                className="group cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+                className="group hover:border-blue-300 hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
-                        <DocIcon className="w-5 h-5" />
+                <div
+                  onClick={() => onRequestClick?.(request)}
+                  className="cursor-pointer flex-1"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                          <DocIcon className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="text-base sm:text-lg group-hover:text-blue-600 transition-colors truncate">
+                            {request.documentType}
+                          </CardTitle>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            ID: #{request.id}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-base sm:text-lg group-hover:text-blue-600 transition-colors">
-                          {request.documentType}
-                        </CardTitle>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          ID: #{request.id}
-                        </p>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={badgeVariant} className="font-bold capitalize text-[10px] sm:text-xs">
+                          {request.status}
+                        </Badge>
+                        
+                        {/* Delete Button (always visible for Pending requests) */}
+                        {request.status === 'Pending' && onDeleteRequest && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent card click
+                              if (window.confirm(`Are you sure you want to delete this request for "${request.documentType}"?\n\nThis action cannot be undone.`)) {
+                                onDeleteRequest(request.id);
+                              }
+                            }}
+                            className="p-2 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition-all touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
+                            title="Delete request"
+                            aria-label="Delete request"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
+                  </CardHeader>
 
-                    <Badge variant={badgeVariant} className="shrink-0 font-bold capitalize">
-                      {request.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-3 pt-0 text-sm">
-                  {/* Purpose */}
-                  <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                      Purpose
-                    </span>
-                    <p className="text-slate-800 font-medium line-clamp-2">
-                      {request.purpose}
-                    </p>
-                  </div>
-
-                  {/* Remarks */}
-                  {request.remarks && (
-                    <div className="text-xs text-slate-500 bg-amber-50/50 border border-amber-100 rounded-lg p-2.5">
-                      <span className="font-semibold text-amber-900">Remarks:</span> {request.remarks}
+                  <CardContent className="space-y-3 pt-0 text-sm">
+                    {/* Purpose */}
+                    <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
+                        Purpose
+                      </span>
+                      <p className="text-slate-800 font-medium line-clamp-2">
+                        {request.purpose}
+                      </p>
                     </div>
-                  )}
 
-                  {/* Footer metadata */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                    <span className="text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {new Date(request.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </span>
+                    {/* Remarks */}
+                    {request.remarks && (
+                      <div className="text-xs text-slate-500 bg-amber-50/50 border border-amber-100 rounded-lg p-2.5">
+                        <span className="font-semibold text-amber-900">Remarks:</span> {request.remarks}
+                      </div>
+                    )}
 
-                    <span className="text-blue-600 font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                      View Details
-                      <ChevronRight className="w-4 h-4" />
-                    </span>
-                  </div>
-                </CardContent>
+                    {/* Pending Status Notice - Mobile Friendly */}
+                    {request.status === 'Pending' && (
+                      <div className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                        <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>You can delete this request anytime before it's processed</span>
+                      </div>
+                    )}
+
+                    {/* Footer metadata */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        {new Date(request.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+
+                      <span className="text-blue-600 font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                        View Details
+                        <ChevronRight className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </CardContent>
+                </div>
               </Card>
             );
           })}
