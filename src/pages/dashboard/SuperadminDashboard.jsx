@@ -137,7 +137,9 @@ const SuperadminDashboard = () => {
           break;
         case 'permissions':
           const matrix = await superadminAPI.getPermissionMatrix();
-          setPermissionMatrix(matrix.data.data.permissionMatrix);
+          console.log('🔍 Permission Matrix Response:', matrix.data);
+          console.log('🔍 Permission Matrix Data:', matrix.data.data);
+          setPermissionMatrix(matrix.data.data?.permissionMatrix || matrix.data.data || []);
           break;
         case 'services':
           const services = await superadminAPI.getAllDocumentServices();
@@ -145,11 +147,15 @@ const SuperadminDashboard = () => {
           break;
         case 'settings':
           const settings = await superadminAPI.getAllSystemSettings();
-          setSystemSettings(settings.data.data.groupedSettings);
+          console.log('🔍 System Settings Response:', settings.data);
+          console.log('🔍 System Settings Data:', settings.data.data);
+          setSystemSettings(settings.data.data?.groupedSettings || settings.data.data || {});
           break;
         case 'features':
           const flags = await superadminAPI.getAllFeatureFlags();
-          setFeatureFlags(flags.data.data.flags);
+          console.log('🔍 Feature Flags Response:', flags.data);
+          console.log('🔍 Feature Flags Data:', flags.data.data);
+          setFeatureFlags(flags.data.data?.flags || flags.data.data || []);
           break;
         case 'logs':
           const logs = await superadminAPI.getAuditLogs({ limit: 100 });
@@ -527,6 +533,7 @@ const PermissionsTab = ({ permissionMatrix, onUpdate }) => {
   const [localMatrix, setLocalMatrix] = useState([]);
 
   useEffect(() => {
+    console.log('🔍 PermissionsTab received:', permissionMatrix);
     setLocalMatrix(permissionMatrix);
   }, [permissionMatrix]);
 
@@ -543,6 +550,19 @@ const PermissionsTab = ({ permissionMatrix, onUpdate }) => {
     acc[perm.module].push(perm);
     return acc;
   }, {});
+
+  // Check if data is empty
+  if (!localMatrix || localMatrix.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+        <Shield className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Permissions Found</h3>
+        <p className="text-sm text-slate-600">
+          Permission matrix is empty. Please check if the database migration ran successfully.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -714,6 +734,21 @@ const DocumentServicesTab = ({ services, onAdd, onEdit, onDelete }) => {
 };
 
 const SystemSettingsTab = ({ settings, onEdit }) => {
+  console.log('🔍 SystemSettingsTab received:', settings);
+  
+  // Check if settings is empty
+  if (!settings || Object.keys(settings).length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+        <Settings className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Settings Found</h3>
+        <p className="text-sm text-slate-600">
+          System settings are empty. Please check if the database migration ran successfully.
+        </p>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       {Object.entries(settings).map(([category, categorySettings]) => (
@@ -746,6 +781,21 @@ const SystemSettingsTab = ({ settings, onEdit }) => {
 };
 
 const FeatureFlagsTab = ({ flags, onToggle }) => {
+  console.log('🔍 FeatureFlagsTab received:', flags);
+  
+  // Check if flags is empty
+  if (!flags || flags.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+        <ToggleLeft className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Feature Flags Found</h3>
+        <p className="text-sm text-slate-600">
+          Feature flags are empty. Please check if the database migration ran successfully.
+        </p>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-4">
       {flags.map((flag) => (
