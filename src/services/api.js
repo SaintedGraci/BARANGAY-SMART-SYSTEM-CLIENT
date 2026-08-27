@@ -124,10 +124,13 @@ api.interceptors.response.use(
 
     // For other 401 errors or if token is revoked/invalid, redirect to login
     // BUT: Don't redirect if this is already a login attempt (to allow error messages to display)
+    // ALSO: Don't redirect on 500 errors (server errors should not cause logout)
     if (error.response?.status === 401) {
       const isLoginRequest = originalRequest.url?.includes('/auth/login');
+      const isServerError = error.response?.status >= 500;
       
-      if (!isLoginRequest) {
+      if (!isLoginRequest && !isServerError) {
+        console.warn('401 Unauthorized - logging out user');
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
@@ -135,6 +138,16 @@ api.interceptors.response.use(
         const isAdminPath = window.location.pathname.includes('/admin');
         window.location.href = isAdminPath ? '/admin/login' : '/login';
       }
+    }
+
+    // Log errors for debugging but don't logout on 500 errors
+    if (error.response?.status >= 500) {
+      console.error('Server error occurred:', {
+        status: error.response.status,
+        url: originalRequest.url,
+        data: error.response.data,
+        message: error.response.data?.message || error.message
+      });
     }
 
     return Promise.reject(error);
