@@ -30,6 +30,7 @@ export default function RegisterPage() {
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   
   // Turnstile state
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -126,9 +127,41 @@ export default function RegisterPage() {
 
       setEmailVerificationSent(true);
       setVerificationMessage(response.data.message);
+      
+      // Start 60 second cooldown
+      setCooldownSeconds(60);
+      const interval = setInterval(() => {
+        setCooldownSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
       setTimeout(() => setVerificationMessage(''), 5000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send verification code');
+      const errorMessage = err.response?.data?.message || 'Failed to send verification code';
+      setError(errorMessage);
+      
+      // If rate limited, extract cooldown time from error message
+      if (err.response?.status === 429) {
+        const match = errorMessage.match(/(\d+)\s+second/);
+        if (match) {
+          const seconds = parseInt(match[1]);
+          setCooldownSeconds(seconds);
+          const interval = setInterval(() => {
+            setCooldownSeconds(prev => {
+              if (prev <= 1) {
+                clearInterval(interval);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
+      }
     } finally {
       setIsSendingCode(false);
     }
@@ -1050,10 +1083,14 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={handleSendVerificationCode}
-                    disabled={isSendingCode}
+                    disabled={isSendingCode || cooldownSeconds > 0}
                     className="w-full py-2.5 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSendingCode ? 'Sending...' : 'Send Verification Code'}
+                    {isSendingCode 
+                      ? 'Sending...' 
+                      : cooldownSeconds > 0 
+                        ? `Wait ${cooldownSeconds}s` 
+                        : 'Send Verification Code'}
                   </button>
                 )}
 
@@ -1082,10 +1119,10 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={handleSendVerificationCode}
-                      disabled={isSendingCode}
-                      className="text-xs text-slate-600 hover:text-slate-900 font-medium"
+                      disabled={isSendingCode || cooldownSeconds > 0}
+                      className="text-xs text-slate-600 hover:text-slate-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Resend Code
+                      {cooldownSeconds > 0 ? `Resend in ${cooldownSeconds}s` : 'Resend Code'}
                     </button>
                   </div>
                 )}
