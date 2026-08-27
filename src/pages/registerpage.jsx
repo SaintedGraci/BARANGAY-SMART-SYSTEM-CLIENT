@@ -119,7 +119,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/send-verification-code`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/send-verification-code`, {
         email: formData.gmail,
         name: formData.firstName || 'User'
       });
@@ -144,7 +144,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/verify-code-before-registration`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/verify-code-before-registration`, {
         email: formData.gmail,
         code: verificationCode
       });
@@ -258,7 +258,7 @@ export default function RegisterPage() {
       submitData.append('proofOfResidency', formData.proofOfResidency);
       submitData.append('turnstileToken', turnstileToken);
 
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/register`, submitData, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register`, submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -586,7 +586,7 @@ export default function RegisterPage() {
 
                     try {
                       const response = await axios.post(
-                        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/verify-email`,
+                        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/verify-email`,
                         {
                           email: formData.gmail,
                           code: verificationCode
@@ -623,7 +623,7 @@ export default function RegisterPage() {
 
                       try {
                         const response = await axios.post(
-                          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/resend-verification`,
+                          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/resend-verification`,
                           { email: formData.gmail }
                         );
 
