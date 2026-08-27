@@ -508,6 +508,145 @@ export default function RegisterPage() {
   };
 
   if (registrationSuccess) {
+    // Show email verification screen
+    if (!emailVerified) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="w-full max-w-md">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 sm:p-8 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Mail className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Verify Your Email</h2>
+                <p className="text-blue-100 text-sm">We've sent a 6-digit code to</p>
+                <p className="text-white font-semibold mt-1">{formData.gmail || formData.username}</p>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 sm:p-8 space-y-6">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm">{error}</p>
+                  </div>
+                )}
+
+                {verificationMessage && !error && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800 flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm">{verificationMessage}</p>
+                  </div>
+                )}
+
+                {/* Code Input */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Enter Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    maxLength="6"
+                    value={verificationCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setVerificationCode(value);
+                      setError('');
+                    }}
+                    placeholder="000000"
+                    className="w-full text-center text-2xl font-bold tracking-widest rounded-lg border-2 border-slate-300 px-4 py-4 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
+                  />
+                  <p className="text-xs text-slate-500 mt-2 text-center">
+                    Code expires in 10 minutes
+                  </p>
+                </div>
+
+                {/* Verify Button */}
+                <button
+                  onClick={async () => {
+                    if (!verificationCode || verificationCode.length !== 6) {
+                      setError("Please enter the 6-digit code");
+                      return;
+                    }
+
+                    setIsVerifyingCode(true);
+                    setError("");
+
+                    try {
+                      const response = await axios.post(
+                        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/verify-email`,
+                        {
+                          email: formData.gmail,
+                          code: verificationCode
+                        }
+                      );
+
+                      setEmailVerified(true);
+                      setVerificationMessage(response.data.message);
+                    } catch (err) {
+                      setError(err.response?.data?.message || 'Invalid verification code');
+                    } finally {
+                      setIsVerifyingCode(false);
+                    }
+                  }}
+                  disabled={isVerifyingCode || verificationCode.length !== 6}
+                  className="w-full rounded-lg bg-blue-600 py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+                >
+                  {isVerifyingCode ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Verifying...
+                    </span>
+                  ) : (
+                    'Verify Email'
+                  )}
+                </button>
+
+                {/* Resend Code */}
+                <div className="text-center">
+                  <button
+                    onClick={async () => {
+                      setIsSendingCode(true);
+                      setError("");
+
+                      try {
+                        const response = await axios.post(
+                          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/resend-verification`,
+                          { email: formData.gmail }
+                        );
+
+                        setVerificationMessage(response.data.message);
+                        setVerificationCode('');
+                      } catch (err) {
+                        setError(err.response?.data?.message || 'Failed to resend code');
+                      } finally {
+                        setIsSendingCode(false);
+                      }
+                    }}
+                    disabled={isSendingCode}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSendingCode ? 'Sending...' : "Didn't receive code? Resend"}
+                  </button>
+                </div>
+
+                {/* Help Text */}
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center">
+                  <p className="text-xs text-slate-600">
+                    Check your spam folder if you don't see the email. Make sure {formData.gmail} is correct.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Show success screen after email verification
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <ReviewModal />
@@ -524,8 +663,8 @@ export default function RegisterPage() {
               {/* Main Content */}
               <div className="text-center space-y-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-slate-900 mb-2">Registration Submitted</h2>
-                  <p className="text-lg text-slate-600">Thank you for registering with Barangay Bakilid</p>
+                  <h2 className="text-3xl font-bold text-slate-900 mb-2">Email Verified!</h2>
+                  <p className="text-lg text-slate-600">Registration completed successfully</p>
                 </div>
 
                 {/* Status Card */}
@@ -537,7 +676,7 @@ export default function RegisterPage() {
                       </div>
                       <div className="text-left">
                         <p className="text-xs font-semibold text-amber-900 uppercase tracking-wide">Current Status</p>
-                        <p className="text-base font-bold text-amber-700">Pending Verification</p>
+                        <p className="text-base font-bold text-amber-700">Awaiting Admin Approval</p>
                       </div>
                     </div>
                     <div className="flex gap-1.5">
@@ -547,7 +686,7 @@ export default function RegisterPage() {
                     </div>
                   </div>
                   <p className="text-sm text-amber-900/80 leading-relaxed">
-                    Your account is currently under review by the Barangay Administrator. You will receive a notification once your account has been verified and activated.
+                    Your email has been verified successfully! Your account is now under review by the Barangay Administrator. You will receive a notification once your account has been activated.
                   </p>
                 </div>
 
