@@ -31,7 +31,25 @@ export default function SelfieCapture({ onCapture, onCancel }) {
     setError("");
     setIsLoading(true);
 
+    // Check if getUserMedia is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setIsLoading(false);
+      setError("Camera API is not supported in this browser. Please use a modern browser or enable HTTPS.");
+      console.error("getUserMedia not supported");
+      return;
+    }
+
+    // Check if running on HTTPS (required for camera on non-localhost)
+    if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      setIsLoading(false);
+      setError("Camera access requires HTTPS connection. Please access this page via HTTPS.");
+      console.error("Camera requires HTTPS");
+      return;
+    }
+
     try {
+      console.log("Requesting camera access...");
+      
       // Request camera access
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -42,30 +60,50 @@ export default function SelfieCapture({ onCapture, onCancel }) {
         audio: false
       });
 
+      console.log("Camera access granted", stream);
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          console.log("Video metadata loaded");
+          videoRef.current.play().then(() => {
+            console.log("Video playing");
+            setIsCameraOpen(true);
+            setIsLoading(false);
+          }).catch(playErr => {
+            console.error("Video play error:", playErr);
+            setError("Failed to start video playback. Please try again.");
+            setIsLoading(false);
+          });
+        };
+      } else {
+        setIsCameraOpen(true);
+        setIsLoading(false);
       }
-
-      setIsCameraOpen(true);
-      setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
       
+      console.error("Camera error details:", {
+        name: err.name,
+        message: err.message,
+        constraint: err.constraint
+      });
+      
       // Handle different error types
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setError("Camera access denied. Please allow camera permissions in your browser settings.");
+        setError("Camera access denied. Please allow camera permissions in your browser settings and reload the page.");
       } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
         setError("No camera found on this device. Please use a device with a camera.");
       } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
         setError("Camera is already in use by another application. Please close other apps using the camera.");
+      } else if (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError") {
+        setError("Camera settings are not supported by your device. Please try a different device.");
       } else {
         setError(`Unable to access camera: ${err.message}`);
       }
-      
-      console.error("Camera error:", err);
     }
   };
 
