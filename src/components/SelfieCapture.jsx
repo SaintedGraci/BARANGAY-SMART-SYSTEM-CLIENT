@@ -229,7 +229,7 @@ export default function SelfieCapture({ onCapture, onCancel }) {
       {/* Camera View or Captured Image */}
       <div className="relative bg-slate-900 rounded-lg overflow-hidden" style={{ aspectRatio: "4/3" }}>
         {!isCameraOpen && !capturedImage && (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="text-center text-slate-400">
               <Camera className="w-16 h-16 mx-auto mb-3 opacity-50" />
               <p className="text-sm">Camera preview will appear here</p>
@@ -237,23 +237,22 @@ export default function SelfieCapture({ onCapture, onCancel }) {
           </div>
         )}
 
-        {/* Video Stream */}
-        {isCameraOpen && (
-          <>
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              playsInline
-              muted
-            />
-            {/* Camera guidelines overlay */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="border-2 border-white/50 rounded-full" style={{ width: "60%", aspectRatio: "1" }}>
-                <div className="w-full h-full rounded-full border-4 border-white/20" />
-              </div>
+        {/* Video Stream - Always rendered but hidden when not in use */}
+        <video
+          ref={videoRef}
+          className={`w-full h-full object-cover ${!isCameraOpen || capturedImage ? 'hidden' : ''}`}
+          autoPlay
+          playsInline
+          muted
+        />
+        
+        {/* Camera guidelines overlay */}
+        {isCameraOpen && !capturedImage && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="border-2 border-white/50 rounded-full" style={{ width: "60%", aspectRatio: "1" }}>
+              <div className="w-full h-full rounded-full border-4 border-white/20" />
             </div>
-          </>
+          </div>
         )}
 
         {/* Captured Image Preview */}
