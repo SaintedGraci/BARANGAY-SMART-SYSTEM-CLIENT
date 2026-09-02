@@ -84,26 +84,73 @@ export default function RegisterPage() {
   };
 
   const validateStep1 = () => {
-    if (!formData.firstName || !formData.lastName) {
-      setError("First name and last name are required");
+    // Personal Information Validation
+    if (!formData.firstName || formData.firstName.trim().length === 0) {
+      setError("❌ First name is required");
+      return false;
+    }
+    if (formData.firstName.length < 2) {
+      setError("❌ First name must be at least 2 characters");
+      return false;
+    }
+    if (!formData.lastName || formData.lastName.trim().length === 0) {
+      setError("❌ Last name is required");
+      return false;
+    }
+    if (formData.lastName.length < 2) {
+      setError("❌ Last name must be at least 2 characters");
       return false;
     }
     if (!formData.gender) {
-      setError("Gender is required");
+      setError("❌ Please select your gender");
       return false;
     }
     if (!formData.birthDate) {
-      setError("Date of birth is required");
+      setError("❌ Date of birth is required");
       return false;
     }
-    if (!formData.contactNumber || formData.contactNumber.length < 10) {
-      setError("Valid mobile number is required");
+    
+    // Age validation (must be at least 18)
+    const today = new Date();
+    const birthDate = new Date(formData.birthDate);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      setError("❌ You must be at least 18 years old to register");
       return false;
     }
-    if (!formData.houseNo || !formData.street || !formData.purok) {
-      setError("Complete address is required");
+    if (age > 120) {
+      setError("❌ Please enter a valid birth date");
       return false;
     }
+    
+    // Contact Number Validation
+    if (!formData.contactNumber || formData.contactNumber.trim().length === 0) {
+      setError("❌ Contact number is required");
+      return false;
+    }
+    if (!/^(09|\+639)\d{9}$/.test(formData.contactNumber)) {
+      setError("❌ Invalid Philippine mobile number. Format: 09123456789 (11 digits)");
+      return false;
+    }
+    
+    // Address Validation
+    if (!formData.houseNo || formData.houseNo.trim().length === 0) {
+      setError("❌ House/Block/Lot number is required");
+      return false;
+    }
+    if (!formData.street || formData.street.trim().length === 0) {
+      setError("❌ Street name is required");
+      return false;
+    }
+    if (!formData.purok) {
+      setError("❌ Please select a purok");
+      return false;
+    }
+    
     return true;
   };
 
@@ -196,54 +243,101 @@ export default function RegisterPage() {
   };
 
   const validateStep2 = () => {
-    if (!formData.username || formData.username.length < 3) {
-      setError("Username must be at least 3 characters");
+    // Username Validation
+    if (!formData.username || formData.username.trim().length === 0) {
+      setError("❌ Username is required");
+      return false;
+    }
+    if (formData.username.length < 3) {
+      setError("❌ Username must be at least 3 characters long");
+      return false;
+    }
+    if (formData.username.length > 20) {
+      setError("❌ Username must not exceed 20 characters");
       return false;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      setError("Username can only contain letters, numbers, and underscores");
+      setError("❌ Username can only contain letters, numbers, and underscores (no spaces or special characters)");
       return false;
     }
-    if (formData.gmail && !/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.gmail)) {
-      setError("Please enter a valid Gmail address");
+    
+    // Gmail Validation (optional but must be valid if provided)
+    if (formData.gmail && formData.gmail.trim().length > 0) {
+      if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.gmail)) {
+        setError("❌ Please enter a valid Gmail address (must end with @gmail.com)");
+        return false;
+      }
+      if (!emailVerified) {
+        setError("❌ Please verify your Gmail address before continuing");
+        return false;
+      }
+    }
+    
+    // Password Validation
+    if (!formData.password || formData.password.length === 0) {
+      setError("❌ Password is required");
       return false;
     }
-    if (formData.gmail && !emailVerified) {
-      setError("Please verify your Gmail address before continuing");
+    if (formData.password.length < 6) {
+      setError("❌ Password must be at least 6 characters long");
       return false;
     }
-    if (!formData.password || formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (formData.password.length > 50) {
+      setError("❌ Password must not exceed 50 characters");
+      return false;
+    }
+    if (!formData.confirmPassword || formData.confirmPassword.length === 0) {
+      setError("❌ Please confirm your password");
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError("❌ Passwords do not match. Please re-enter matching passwords");
       return false;
     }
+    
+    // Terms Agreement
     if (!agreeToTerms) {
-      setError("You must agree to the Terms and Privacy Policy");
+      setError("❌ You must agree to the Terms of Service and Privacy Policy to continue");
       return false;
     }
+    
     return true;
   };
 
   const validateStep3 = () => {
+    // Document Upload Validation
     if (!formData.validId) {
-      setError("Please upload a valid ID");
+      setError("❌ Please upload a valid government-issued ID (e.g., National ID, Driver's License, Passport)");
       return false;
     }
+    if (formData.validId && formData.validId.size > 5 * 1024 * 1024) {
+      setError("❌ Valid ID file size must not exceed 5MB");
+      return false;
+    }
+    
     if (!formData.proofOfResidency) {
-      setError("Please upload proof of residency");
+      setError("❌ Please upload proof of residency (e.g., Barangay Certificate, Utility Bill)");
       return false;
     }
+    if (formData.proofOfResidency && formData.proofOfResidency.size > 5 * 1024 * 1024) {
+      setError("❌ Proof of residency file size must not exceed 5MB");
+      return false;
+    }
+    
     return true;
   };
 
   const validateStep4 = () => {
+    // Selfie Validation
     if (!formData.selfie) {
-      setError("Please capture a selfie before continuing");
+      setError("❌ Please capture a selfie for identity verification");
       return false;
     }
+    if (formData.selfie && formData.selfie.size > 5 * 1024 * 1024) {
+      setError("❌ Selfie file size must not exceed 5MB");
+      return false;
+    }
+    
     return true;
   };
 
@@ -263,13 +357,24 @@ export default function RegisterPage() {
   };
 
   const handleNext = () => {
+    setError(""); // Clear any previous errors
+    
     if (currentStep === 1 && validateStep1()) {
       setReviewStep(1);
       setShowReviewModal(true);
     } else if (currentStep === 2 && validateStep2()) {
       setReviewStep(2);
       setShowReviewModal(true);
+    } else if (currentStep === 3 && validateStep3()) {
+      // Documents validated, proceed to Step 4 (Selfie)
+      setCurrentStep(4);
+      setError("");
+    } else if (currentStep === 4 && validateStep4()) {
+      // All steps complete, show final review
+      setReviewStep(4);
+      setShowReviewModal(true);
     }
+    // If validation fails, error is already set and user stays on current step
   };
 
   const handleConfirmAndProceed = () => {
