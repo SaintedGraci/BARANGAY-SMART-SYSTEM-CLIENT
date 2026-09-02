@@ -61,27 +61,44 @@ export default function SelfieCapture({ onCapture, onCancel }) {
       });
 
       console.log("Camera access granted", stream);
+      console.log("Stream tracks:", stream.getTracks());
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        setIsCameraOpen(true); // Show video immediately
         
-        // Wait for video to be ready
+        // Wait for video to be ready and play
         videoRef.current.onloadedmetadata = () => {
           console.log("Video metadata loaded");
-          videoRef.current.play().then(() => {
-            console.log("Video playing");
-            setIsCameraOpen(true);
-            setIsLoading(false);
-          }).catch(playErr => {
-            console.error("Video play error:", playErr);
-            setError("Failed to start video playback. Please try again.");
-            setIsLoading(false);
-          });
+          videoRef.current.play()
+            .then(() => {
+              console.log("Video playing successfully");
+              setIsLoading(false);
+            })
+            .catch(playErr => {
+              console.error("Video play error:", playErr);
+              setError("Failed to start video playback. Please try again.");
+              setIsLoading(false);
+              stopCamera();
+            });
         };
+        
+        // Fallback: If metadata doesn't load in 3 seconds, try to play anyway
+        setTimeout(() => {
+          if (videoRef.current && videoRef.current.readyState === 0) {
+            console.log("Metadata timeout, attempting to play anyway");
+            videoRef.current.play().catch(err => {
+              console.error("Fallback play failed:", err);
+            });
+          }
+          setIsLoading(false);
+        }, 3000);
       } else {
-        setIsCameraOpen(true);
+        console.error("Video ref is null");
+        setError("Video element not ready. Please try again.");
         setIsLoading(false);
+        stopCamera();
       }
     } catch (err) {
       setIsLoading(false);
