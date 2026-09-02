@@ -355,7 +355,8 @@ export default function AdminDashboard() {
   const [blurredInlineDocuments, setBlurredInlineDocuments] = useState({});
   const [blurredResidentDocs, setBlurredResidentDocs] = useState({
     validId: true,
-    proofOfResidency: true
+    proofOfResidency: true,
+    selfie: true
   });
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [documentToView, setDocumentToView] = useState(null);
@@ -2672,7 +2673,7 @@ export default function AdminDashboard() {
               </div>
             </section>
 
-            {(selectedResident.validIdPath || selectedResident.proofOfResidencyPath) && (
+            {(selectedResident.validIdPath || selectedResident.proofOfResidencyPath || selectedResident.selfieUrl) && (
               <section>
                 <h4 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">
                   <FileCheck className="h-4 w-4 text-blue-700" />
@@ -2789,7 +2790,62 @@ export default function AdminDashboard() {
                     </div>
                   )}
                   
-                  {!selectedResident.validIdPath && !selectedResident.proofOfResidencyPath && (
+                  {selectedResident.selfieUrl && (
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Identity Selfie</p>
+                          <p className="mt-0.5 text-xs text-slate-500">For identity verification</p>
+                        </div>
+                        <a
+                          href={selectedResident.selfieUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Open Full Size
+                        </a>
+                      </div>
+                      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <img
+                          src={selectedResident.selfieUrl}
+                          alt="Identity Selfie"
+                          className={`h-64 w-full object-contain transition-all duration-300 ${
+                            blurredResidentDocs.selfie ? 'blur-xl' : 'blur-none'
+                          }`}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }}
+                        />
+                        {blurredResidentDocs.selfie && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
+                            <button
+                              onClick={() => setBlurredResidentDocs(prev => ({ ...prev, selfie: false }))}
+                              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Click to View
+                            </button>
+                          </div>
+                        )}
+                        <div className="hidden h-64 w-full items-center justify-center bg-slate-50 text-sm text-slate-500">
+                          Failed to load image
+                        </div>
+                      </div>
+                      {!blurredResidentDocs.selfie && (
+                        <button
+                          onClick={() => setBlurredResidentDocs(prev => ({ ...prev, selfie: true }))}
+                          className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          Hide Document
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  
+                  {!selectedResident.validIdPath && !selectedResident.proofOfResidencyPath && !selectedResident.selfieUrl && (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center">
                       <FileCheck className="mx-auto h-12 w-12 text-slate-300" />
                       <p className="mt-3 text-sm font-medium text-slate-500">No documents uploaded</p>
