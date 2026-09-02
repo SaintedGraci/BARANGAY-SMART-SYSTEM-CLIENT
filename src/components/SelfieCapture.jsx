@@ -15,7 +15,6 @@ export default function SelfieCapture({ onCapture, onCancel }) {
   const [capturedImage, setCapturedImage] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [shouldStartCamera, setShouldStartCamera] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -28,29 +27,14 @@ export default function SelfieCapture({ onCapture, onCancel }) {
     };
   }, []);
 
-  // Start camera when requested and refs are ready
-  useEffect(() => {
-    if (shouldStartCamera && videoRef.current) {
-      console.log("Video ref is ready, starting camera");
-      startCameraAsync();
-      setShouldStartCamera(false);
-    }
-  }, [shouldStartCamera]);
-
-  const startCamera = () => {
-    console.log("startCamera called, videoRef.current:", videoRef.current);
-    if (!videoRef.current) {
-      console.log("Video ref not ready yet, setting flag");
-      setShouldStartCamera(true);
-      setIsLoading(true);
-      return;
-    }
-    startCameraAsync();
-  };
-
-  const startCameraAsync = async () => {
+  const startCamera = async () => {
     setError("");
     setIsLoading(true);
+
+    // Small delay to ensure video element is in DOM
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    console.log("startCamera called, videoRef.current:", videoRef.current);
 
     // Check if getUserMedia is supported
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -83,6 +67,8 @@ export default function SelfieCapture({ onCapture, onCancel }) {
 
       console.log("Camera access granted", stream);
       console.log("Stream tracks:", stream.getTracks());
+      console.log("Video element:", videoRef.current);
+      
       streamRef.current = stream;
       
       if (videoRef.current) {
@@ -90,34 +76,30 @@ export default function SelfieCapture({ onCapture, onCancel }) {
         videoRef.current.srcObject = stream;
         setIsCameraOpen(true); // Show video immediately
         
-        // Wait for video to be ready and play
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Video metadata loaded, dimensions:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
-          videoRef.current.play()
-            .then(() => {
-              console.log("Video playing successfully");
+        // Try to play immediately
+        try {
+          await videoRef.current.play();
+          console.log("Video playing successfully");
+          setIsLoading(false);
+        } catch (playErr) {
+          console.log("Initial play failed, waiting for metadata...", playErr);
+          // Fallback: wait for metadata
+          videoRef.current.onloadedmetadata = async () => {
+            console.log("Video metadata loaded");
+            try {
+              await videoRef.current.play();
+              console.log("Video playing after metadata");
               setIsLoading(false);
-            })
-            .catch(playErr => {
-              console.error("Video play error:", playErr);
-              setError("Failed to start video playback. Please try again.");
+            } catch (err) {
+              console.error("Play after metadata failed:", err);
+              setError("Failed to start video. Please try again.");
               setIsLoading(false);
               stopCamera();
-            });
-        };
-        
-        // Fallback: If metadata doesn't load in 3 seconds, try to play anyway
-        setTimeout(() => {
-          if (videoRef.current && videoRef.current.readyState === 0) {
-            console.log("Metadata timeout, attempting to play anyway");
-            videoRef.current.play().catch(err => {
-              console.error("Fallback play failed:", err);
-            });
-          }
-          setIsLoading(false);
-        }, 3000);
+            }
+          };
+        }
       } else {
-        console.error("Video ref is null after getting stream");
+        console.error("Video ref is still null");
         setError("Video element not ready. Please try again.");
         setIsLoading(false);
         stopCamera();
