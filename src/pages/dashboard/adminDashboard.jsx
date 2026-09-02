@@ -879,7 +879,15 @@ export default function AdminDashboard() {
   };
 
   const handleViewDocument = (resident, docType) => {
-    const docPath = docType === 'validId' ? resident.validIdPath : resident.proofOfResidencyPath;
+    let docPath;
+    if (docType === 'validId') {
+      docPath = resident.validIdPath;
+    } else if (docType === 'proofOfResidency') {
+      docPath = resident.proofOfResidencyPath;
+    } else if (docType === 'selfie') {
+      docPath = resident.selfieUrl;
+    }
+    
     if (docPath) {
       setDocumentToView({
         type: docType,
@@ -3349,7 +3357,13 @@ export default function AdminDashboard() {
           setShowDocumentModal(false);
           setDocumentToView(null);
         }}
-        title={documentToView?.type === 'validId' ? 'Valid ID' : 'Proof of Residency'}
+        title={
+          documentToView?.type === 'validId' 
+            ? 'Valid ID' 
+            : documentToView?.type === 'selfie'
+            ? 'Identity Selfie'
+            : 'Proof of Residency'
+        }
         subtitle={documentToView?.resident || 'Resident document'}
         icon={Eye}
         maxWidth="max-w-5xl"
