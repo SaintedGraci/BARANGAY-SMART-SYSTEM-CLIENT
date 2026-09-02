@@ -15,6 +15,7 @@ export default function SelfieCapture({ onCapture, onCancel }) {
   const [capturedImage, setCapturedImage] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [shouldStartCamera, setShouldStartCamera] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -27,7 +28,27 @@ export default function SelfieCapture({ onCapture, onCancel }) {
     };
   }, []);
 
-  const startCamera = async () => {
+  // Start camera when requested and refs are ready
+  useEffect(() => {
+    if (shouldStartCamera && videoRef.current) {
+      console.log("Video ref is ready, starting camera");
+      startCameraAsync();
+      setShouldStartCamera(false);
+    }
+  }, [shouldStartCamera]);
+
+  const startCamera = () => {
+    console.log("startCamera called, videoRef.current:", videoRef.current);
+    if (!videoRef.current) {
+      console.log("Video ref not ready yet, setting flag");
+      setShouldStartCamera(true);
+      setIsLoading(true);
+      return;
+    }
+    startCameraAsync();
+  };
+
+  const startCameraAsync = async () => {
     setError("");
     setIsLoading(true);
 
@@ -65,12 +86,13 @@ export default function SelfieCapture({ onCapture, onCancel }) {
       streamRef.current = stream;
       
       if (videoRef.current) {
+        console.log("Assigning stream to video element");
         videoRef.current.srcObject = stream;
         setIsCameraOpen(true); // Show video immediately
         
         // Wait for video to be ready and play
         videoRef.current.onloadedmetadata = () => {
-          console.log("Video metadata loaded");
+          console.log("Video metadata loaded, dimensions:", videoRef.current.videoWidth, "x", videoRef.current.videoHeight);
           videoRef.current.play()
             .then(() => {
               console.log("Video playing successfully");
@@ -95,7 +117,7 @@ export default function SelfieCapture({ onCapture, onCancel }) {
           setIsLoading(false);
         }, 3000);
       } else {
-        console.error("Video ref is null");
+        console.error("Video ref is null after getting stream");
         setError("Video element not ready. Please try again.");
         setIsLoading(false);
         stopCamera();
