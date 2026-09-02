@@ -310,6 +310,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSentRequests, setEmailSentRequests] = useState(new Set());
   const [selectedResident, setSelectedResident] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -857,6 +859,38 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error updating status:', error);
       alert('Failed to update status');
+    }
+  };
+
+  const handleSendPickupEmail = async (requestId) => {
+    if (!window.confirm('Send pickup notification?\n\nThe resident will be informed that their document is ready for pickup.')) {
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/requests/${requestId}/send-pickup-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('✓ Pickup notification email sent successfully!');
+        setEmailSentRequests(prev => new Set([...prev, requestId]));
+        fetchData();
+      } else {
+        alert(`Failed to send email: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error sending pickup email:', error);
+      alert('Failed to send pickup notification email');
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -2696,6 +2730,56 @@ export default function AdminDashboard() {
                 Click a status to update. Residents will see the change immediately.
               </p>
             </section>
+
+            {selectedRequest.status === 'Ready for Release' && (
+              <section>
+                <h4 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">📧 Email Notification</h4>
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                  {selectedRequest.Resident?.gmail || selectedRequest.Resident?.User?.email ? (
+                    <>
+                      <div className="mb-3 flex items-start gap-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-slate-700">Pickup Notification</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Send email to: {selectedRequest.Resident?.gmail || selectedRequest.Resident?.User?.email}
+                          </p>
+                          {emailSentRequests.has(selectedRequest.id) && (
+                            <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                              <CheckCircle2 className="h-4 w-4" />
+                              Email sent successfully
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleSendPickupEmail(selectedRequest.id)}
+                        disabled={isSendingEmail || emailSentRequests.has(selectedRequest.id)}
+                        className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSendingEmail ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Sending Email...
+                          </span>
+                        ) : emailSentRequests.has(selectedRequest.id) ? (
+                          '✓ Email Sent'
+                        ) : (
+                          '📧 Send Pickup Email'
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex items-start gap-3 text-amber-700">
+                      <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold">No Email Address</p>
+                        <p className="mt-1 text-xs">This resident did not provide an email address during registration.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </Modal>
