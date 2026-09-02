@@ -67,42 +67,46 @@ export default function SelfieCapture({ onCapture, onCancel }) {
 
       console.log("Camera access granted", stream);
       console.log("Stream tracks:", stream.getTracks());
-      console.log("Video element:", videoRef.current);
+      console.log("Video element AFTER stream:", videoRef.current);
+      
+      // Check if component is still mounted and video ref still exists
+      if (!videoRef.current) {
+        console.error("Video ref became null after getting stream - component may have unmounted");
+        stream.getTracks().forEach(track => track.stop());
+        setError("Component state changed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
       
       streamRef.current = stream;
+      videoRef.current.srcObject = stream;
+      setIsCameraOpen(true); // Show video immediately
       
-      if (videoRef.current) {
-        console.log("Assigning stream to video element");
-        videoRef.current.srcObject = stream;
-        setIsCameraOpen(true); // Show video immediately
-        
-        // Try to play immediately
-        try {
-          await videoRef.current.play();
-          console.log("Video playing successfully");
-          setIsLoading(false);
-        } catch (playErr) {
-          console.log("Initial play failed, waiting for metadata...", playErr);
-          // Fallback: wait for metadata
-          videoRef.current.onloadedmetadata = async () => {
-            console.log("Video metadata loaded");
-            try {
-              await videoRef.current.play();
-              console.log("Video playing after metadata");
-              setIsLoading(false);
-            } catch (err) {
-              console.error("Play after metadata failed:", err);
-              setError("Failed to start video. Please try again.");
-              setIsLoading(false);
-              stopCamera();
-            }
-          };
-        }
-      } else {
-        console.error("Video ref is still null");
-        setError("Video element not ready. Please try again.");
+      // Try to play immediately
+      try {
+        await videoRef.current.play();
+        console.log("Video playing successfully");
         setIsLoading(false);
-        stopCamera();
+      } catch (playErr) {
+        console.log("Initial play failed, waiting for metadata...", playErr);
+        // Fallback: wait for metadata
+        videoRef.current.onloadedmetadata = async () => {
+          console.log("Video metadata loaded");
+          if (!videoRef.current) {
+            console.error("Video ref lost during metadata load");
+            return;
+          }
+          try {
+            await videoRef.current.play();
+            console.log("Video playing after metadata");
+            setIsLoading(false);
+          } catch (err) {
+            console.error("Play after metadata failed:", err);
+            setError("Failed to start video. Please try again.");
+            setIsLoading(false);
+            stopCamera();
+          }
+        };
       }
     } catch (err) {
       setIsLoading(false);
