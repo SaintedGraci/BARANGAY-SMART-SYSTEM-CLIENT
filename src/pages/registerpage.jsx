@@ -2,12 +2,13 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Eye, EyeOff, User, Mail, ArrowRight, ArrowLeft, ShieldCheck, Upload, 
-  CheckCircle, Calendar, Phone, MapPin, Home, AlertCircle, Check 
+  CheckCircle, Calendar, Phone, MapPin, Home, AlertCircle, Check, Camera 
 } from "lucide-react";
 import bakilidLogo from "../assets/bakilidlogo.png";
 import axios from "axios";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { TURNSTILE_SITE_KEY, isTurnstileAvailable } from "../config/turnstile";
+import SelfieCapture from "../components/SelfieCapture";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -51,12 +52,14 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     validId: null,
-    proofOfResidency: null
+    proofOfResidency: null,
+    selfie: null
   });
 
   const [previews, setPreviews] = useState({
     validId: null,
-    proofOfResidency: null
+    proofOfResidency: null,
+    selfie: null
   });
 
   const handleInputChange = (field, value) => {
@@ -236,9 +239,25 @@ export default function RegisterPage() {
     return true;
   };
 
+  const validateStep4 = () => {
+    if (!formData.selfie) {
+      setError("Please capture a selfie before continuing");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmitStep3 = () => {
     if (validateStep3()) {
-      setReviewStep(3);
+      setReviewStep(0);
+      setError("");
+      setCurrentStep(4); // Move to selfie step
+    }
+  };
+
+  const handleSubmitStep4 = () => {
+    if (validateStep4()) {
+      setReviewStep(4);
       setShowReviewModal(true);
     }
   };
@@ -255,7 +274,7 @@ export default function RegisterPage() {
 
   const handleConfirmAndProceed = () => {
     setShowReviewModal(false);
-    if (reviewStep === 3) {
+    if (reviewStep === 4) {
       // Final submission
       handleFinalSubmit();
     } else {
@@ -289,6 +308,7 @@ export default function RegisterPage() {
       submitData.append('purok', formData.purok);
       submitData.append('validId', formData.validId);
       submitData.append('proofOfResidency', formData.proofOfResidency);
+      submitData.append('selfie', formData.selfie);
       submitData.append('turnstileToken', turnstileToken);
 
       const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register`, submitData, {
@@ -328,13 +348,18 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    handleSubmitStep3();
+    if (currentStep === 3) {
+      handleSubmitStep3();
+    } else if (currentStep === 4) {
+      handleSubmitStep4();
+    }
   };
 
   const steps = [
     { number: 1, title: "Personal Info", icon: User },
     { number: 2, title: "Account", icon: ShieldCheck },
-    { number: 3, title: "Verification", icon: Upload }
+    { number: 3, title: "Documents", icon: Upload },
+    { number: 4, title: "Selfie", icon: Camera }
   ];
 
   // Review Modal Component
@@ -495,14 +520,51 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Next: Identity Selfie</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        After confirming, you'll take a selfie for identity verification.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reviewStep === 4 && (
+              <div className="space-y-4">
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                    <Camera className="h-4 w-4" />
+                    Identity Verification
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs text-slate-500 mb-2">Identity Selfie</p>
+                      {previews.selfie && (
+                        <div className="relative rounded-lg overflow-hidden border border-slate-200">
+                          <img src={previews.selfie} alt="Selfie Preview" className="w-full h-64 object-contain bg-slate-50" />
+                          <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-md flex items-center gap-1 text-xs font-medium">
+                            <Check className="h-3 w-3" />
+                            Captured
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-amber-900">Final Step</p>
                       <p className="text-xs text-amber-700 mt-1">
-                        By submitting, your registration will be sent to the Barangay Administrator for verification. 
-                        You'll be notified once your account is approved.
+                        By submitting, your registration will be sent to the Barangay Administrator for manual verification. 
+                        Your selfie will be compared with your ID for identity confirmation.
                       </p>
                     </div>
                   </div>
@@ -531,7 +593,7 @@ export default function RegisterPage() {
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   <span>Submitting...</span>
                 </>
-              ) : reviewStep === 3 ? (
+              ) : reviewStep === 4 ? (
                 <>
                   Submit Registration
                   <CheckCircle className="h-4 w-4" />
@@ -869,7 +931,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <form onSubmit={currentStep === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }} className="space-y-4 sm:space-y-6">
+        <form onSubmit={currentStep === 3 || currentStep === 4 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }} className="space-y-4 sm:space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 text-red-800 flex items-start gap-2 sm:gap-3">
               <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 mt-0.5" />
@@ -1206,7 +1268,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Step 3: Verification */}
+          {/* Step 3: Document Verification */}
           {currentStep === 3 && (
             <div className="bg-white p-8 rounded-lg border border-slate-200 shadow-sm space-y-6">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200">
@@ -1302,10 +1364,61 @@ export default function RegisterPage() {
                     <AlertCircle className="h-4 w-4 text-slate-700" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900 mb-1">Verification Process</p>
+                    <p className="text-sm font-medium text-slate-900 mb-1">Next: Identity Selfie</p>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Your documents will be reviewed by the Barangay Administrator. 
-                      You&apos;ll receive a notification once your account is verified.
+                      After uploading your documents, you'll take a selfie for identity verification.
+                      This will be manually reviewed by the Barangay Administrator.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Selfie Verification */}
+          {currentStep === 4 && (
+            <div className="bg-white p-8 rounded-lg border border-slate-200 shadow-sm space-y-6">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200">
+                <div className="h-10 w-10 rounded-lg bg-slate-900 flex items-center justify-center">
+                  <Camera className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Identity Selfie</h2>
+                  <p className="text-sm text-slate-500 mt-1">Final step for identity verification</p>
+                </div>
+              </div>
+
+              <SelfieCapture
+                onCapture={(file) => {
+                  setFormData(prev => ({ ...prev, selfie: file }));
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setPreviews(prev => ({ ...prev, selfie: reader.result }));
+                  };
+                  reader.readAsDataURL(file);
+                  setError("");
+                }}
+              />
+
+              {formData.selfie && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-center gap-2 text-green-800">
+                    <CheckCircle className="h-5 w-5" />
+                    <p className="text-sm font-medium">Selfie captured successfully!</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 mt-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-slate-900/5 flex items-center justify-center">
+                    <AlertCircle className="h-4 w-4 text-slate-700" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-900 mb-1">Manual Verification</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Your selfie will be manually compared with your ID by the Barangay Administrator. 
+                      There is no automated facial recognition - only human review for your privacy.
                     </p>
                   </div>
                 </div>
@@ -1365,9 +1478,9 @@ export default function RegisterPage() {
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   <span>Processing...</span>
                 </>
-              ) : currentStep === 3 ? (
+              ) : currentStep === 4 ? (
                 <>
-                  <span>Submit Registration</span>
+                  <span>Review & Submit</span>
                   <CheckCircle className="h-4 w-4 transition-transform group-hover:scale-110" />
                 </>
               ) : (

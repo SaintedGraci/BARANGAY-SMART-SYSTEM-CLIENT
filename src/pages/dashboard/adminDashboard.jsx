@@ -825,17 +825,56 @@ export default function AdminDashboard() {
   };
 
   const handleRejectResident = async (residentId) => {
-    const reason = window.prompt('Enter rejection reason (optional):');
-    if (reason === null) return;
+    // Define rejection reasons specific to selfie verification
+    const rejectionReasons = [
+      'Selfie does not clearly show the applicant',
+      'Selfie appears inconsistent with submitted ID',
+      'Valid ID could not be verified',
+      'Residency document could not be verified',
+      'Information does not match across documents',
+      'Documents are incomplete or unclear',
+      'Photo quality is insufficient for verification',
+      'Other (please specify)'
+    ];
+
+    // Create a custom dialog for rejection
+    const selectedReason = window.prompt(
+      'Select rejection reason:\n\n' +
+      rejectionReasons.map((r, i) => `${i + 1}. ${r}`).join('\n') +
+      '\n\nEnter the number (1-8) or type a custom reason:',
+      ''
+    );
+
+    if (selectedReason === null) return; // User cancelled
+
+    let finalReason = '';
+    const reasonNum = parseInt(selectedReason);
+    
+    if (reasonNum >= 1 && reasonNum <= rejectionReasons.length) {
+      if (reasonNum === rejectionReasons.length) {
+        // "Other" selected - ask for custom reason
+        const customReason = window.prompt('Please specify the rejection reason:');
+        if (customReason === null || !customReason.trim()) return;
+        finalReason = customReason.trim();
+      } else {
+        finalReason = rejectionReasons[reasonNum - 1];
+      }
+    } else if (selectedReason.trim()) {
+      // Custom reason entered directly
+      finalReason = selectedReason.trim();
+    } else {
+      alert('Please provide a rejection reason.');
+      return;
+    }
 
     try {
-      await residentsAPI.reject(residentId, reason);
-      alert('Resident verification rejected.');
+      await residentsAPI.reject(residentId, finalReason);
+      alert('✓ Registration rejected. The resident will be notified.');
       fetchPendingVerifications();
       fetchData();
     } catch (error) {
       console.error('Error rejecting resident:', error);
-      alert(error.response?.data?.message || 'Failed to reject resident');
+      alert(error.response?.data?.message || 'Failed to reject registration');
     }
   };
 
@@ -1853,6 +1892,125 @@ export default function AdminDashboard() {
                             <p className="text-sm text-slate-500">No document uploaded</p>
                           </div>
                         )}
+                      </div>
+
+                      {/* Identity Selfie */}
+                      <div className="rounded-lg border border-slate-200 bg-white p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-bold text-slate-950">Identity Selfie</p>
+                            <p className="text-xs text-slate-500">For manual identity verification</p>
+                          </div>
+                          {selectedVerification.selfieUrl && (
+                            <a
+                              href={selectedVerification.selfieUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Open
+                            </a>
+                          )}
+                        </div>
+                        
+                        {selectedVerification.selfieUrl ? (
+                          <div className="relative mb-3">
+                            <img
+                              src={selectedVerification.selfieUrl}
+                              alt="Identity Selfie"
+                              onError={(e) => {
+                                console.error('Failed to load selfie:', selectedVerification.selfieUrl);
+                                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f1f5f9" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EImage not available%3C/text%3E%3C/svg%3E';
+                              }}
+                              className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
+                                blurredDocuments[`${selectedVerification.id}-selfie`] ? 'blur-xl' : 'blur-none'
+                              }`}
+                            />
+                            {blurredDocuments[`${selectedVerification.id}-selfie`] && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20 rounded-xl">
+                                <button
+                                  onClick={() => setBlurredDocuments(prev => ({ ...prev, [`${selectedVerification.id}-selfie`]: false }))}
+                                  className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Click to View
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
+                            <p className="text-sm text-slate-500">No selfie captured</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Manual Verification Notice */}
+                    <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-blue-900">Manual Identity Verification</p>
+                          <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                            Please manually compare the face shown in the selfie with the photo on the Valid ID. 
+                            There is no automated facial recognition - this is a human review process for privacy and accuracy.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Verification Checklist */}
+                    <div className="mt-6">
+                      <h5 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        Verification Checklist
+                      </h5>
+                      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                        <p className="text-xs text-slate-600 mb-3">
+                          Please review the following before making a decision:
+                        </p>
+                        <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          />
+                          <span className="text-sm text-slate-700">☑ Valid ID appears legitimate and readable</span>
+                        </label>
+                        <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          />
+                          <span className="text-sm text-slate-700">☑ Barangay residency document is valid</span>
+                        </label>
+                        <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          />
+                          <span className="text-sm text-slate-700">☑ Selfie is clear and shows face</span>
+                        </label>
+                        <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          />
+                          <span className="text-sm text-slate-700">☑ Selfie matches the person on the ID</span>
+                        </label>
+                        <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          />
+                          <span className="text-sm text-slate-700">☑ Information is consistent</span>
+                        </label>
+                        <div className="mt-3 pt-3 border-t border-slate-100">
+                          <p className="text-xs text-slate-500 italic">
+                            This checklist is for guidance. Use your judgment to verify identity.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2931,6 +3089,127 @@ export default function AdminDashboard() {
                     <p className="text-sm text-slate-500">No document uploaded</p>
                   )}
                 </div>
+
+                {/* Identity Selfie */}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-950">Identity Selfie</span>
+                    <Badge className="bg-purple-50 text-purple-700 ring-purple-600/15 border-purple-200">Verification</Badge>
+                  </div>
+                  {selectedVerification.selfieUrl ? (
+                    <>
+                      <div className="relative mb-3">
+                        <img
+                          src={selectedVerification.selfieUrl}
+                          alt="Identity Selfie"
+                          onError={(e) => {
+                            console.error('Failed to load selfie:', selectedVerification.selfieUrl);
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f1f5f9" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EImage not available%3C/text%3E%3C/svg%3E';
+                          }}
+                          className={`h-48 w-full rounded-xl object-cover transition-all duration-300 ${
+                            blurredDocuments.selfie ? 'blur-xl' : 'blur-none'
+                          }`}
+                        />
+                        {blurredDocuments.selfie && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20 rounded-xl">
+                            <button
+                              onClick={() => setBlurredDocuments(prev => ({ ...prev, selfie: false }))}
+                              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-slate-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Click to View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {!blurredDocuments.selfie && (
+                          <button
+                            onClick={() => setBlurredDocuments(prev => ({ ...prev, selfie: true }))}
+                            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Hide
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleViewDocument(selectedVerification, 'selfie')}
+                          className="flex-1 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-semibold text-purple-700 transition hover:bg-purple-100"
+                        >
+                          View Full Size
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-500">No selfie captured</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Manual Verification Notice */}
+              <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-900">Manual Identity Verification</p>
+                    <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                      Please manually compare the face shown in the selfie with the photo on the Valid ID. 
+                      There is no automated facial recognition - this is a human review process for privacy and accuracy.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Verification Checklist */}
+              <div className="mt-6">
+                <h5 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  Verification Checklist
+                </h5>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                  <p className="text-xs text-slate-600 mb-3">
+                    Please review the following before making a decision:
+                  </p>
+                  <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-sm text-slate-700">☑ Valid ID appears legitimate and readable</span>
+                  </label>
+                  <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-sm text-slate-700">☑ Barangay residency document is valid</span>
+                  </label>
+                  <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-sm text-slate-700">☑ Selfie is clear and shows face</span>
+                  </label>
+                  <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-sm text-slate-700">☑ Selfie matches the person on the ID</span>
+                  </label>
+                  <label className="flex items-start gap-3 p-2 rounded hover:bg-slate-50 transition cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-sm text-slate-700">☑ Information is consistent</span>
+                  </label>
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <p className="text-xs text-slate-500 italic">
+                      This checklist is for guidance. Use your judgment to verify identity.
+                    </p>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -2939,7 +3218,7 @@ export default function AdminDashboard() {
                 type="button"
                 onClick={() => {
                   setSelectedVerification(null);
-                  setBlurredDocuments({ validId: true, proofOfResidency: true });
+                  setBlurredDocuments({ validId: true, proofOfResidency: true, selfie: true });
                 }}
                 className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
