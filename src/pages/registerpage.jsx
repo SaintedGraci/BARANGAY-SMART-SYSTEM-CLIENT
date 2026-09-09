@@ -53,10 +53,10 @@ export default function RegisterPage() {
             setCooldownSeconds(remainingSeconds);
             
             // Start countdown
-            const interval = setInterval(() => {
+            const countdownInterval = setInterval(() => {
               setCooldownSeconds(prev => {
                 if (prev <= 1) {
-                  clearInterval(interval);
+                  clearInterval(countdownInterval);
                   localStorage.removeItem('emailVerificationCooldown');
                   return 0;
                 }
@@ -64,7 +64,8 @@ export default function RegisterPage() {
               });
             }, 1000);
             
-            return () => clearInterval(interval);
+            // Cleanup on unmount
+            return countdownInterval;
           } else if (now >= expiresAt) {
             // Cooldown expired, clean up
             localStorage.removeItem('emailVerificationCooldown');
@@ -82,9 +83,18 @@ export default function RegisterPage() {
         // No cooldown data, ensure counter is 0
         setCooldownSeconds(0);
       }
+      
+      return null;
     };
     
-    checkCooldown();
+    const intervalId = checkCooldown();
+    
+    // Cleanup function
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [formData.gmail]); // Re-check when email changes
   
   const [formData, setFormData] = useState({
