@@ -37,6 +37,47 @@ export default function RegisterPage() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const turnstileRef = useRef(null);
   
+  // Check localStorage for existing cooldown on mount
+  useEffect(() => {
+    const checkCooldown = () => {
+      const cooldownData = localStorage.getItem('emailVerificationCooldown');
+      if (cooldownData) {
+        try {
+          const { email, expiresAt } = JSON.parse(cooldownData);
+          const now = Date.now();
+          
+          if (now < expiresAt) {
+            // Cooldown still active
+            const remainingSeconds = Math.ceil((expiresAt - now) / 1000);
+            setCooldownSeconds(remainingSeconds);
+            
+            // Start countdown
+            const interval = setInterval(() => {
+              setCooldownSeconds(prev => {
+                if (prev <= 1) {
+                  clearInterval(interval);
+                  localStorage.removeItem('emailVerificationCooldown');
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+            
+            return () => clearInterval(interval);
+          } else {
+            // Cooldown expired, clean up
+            localStorage.removeItem('emailVerificationCooldown');
+          }
+        } catch (e) {
+          // Invalid data, clean up
+          localStorage.removeItem('emailVerificationCooldown');
+        }
+      }
+    };
+    
+    checkCooldown();
+  }, []);
+  
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -178,12 +219,21 @@ export default function RegisterPage() {
       setEmailVerificationSent(true);
       setVerificationMessage(response.data.message);
       
+      // Store cooldown in localStorage (survives page refresh)
+      const cooldownDuration = 60; // 60 seconds
+      const expiresAt = Date.now() + (cooldownDuration * 1000);
+      localStorage.setItem('emailVerificationCooldown', JSON.stringify({
+        email: formData.gmail,
+        expiresAt
+      }));
+      
       // Start 60 second cooldown
-      setCooldownSeconds(60);
+      setCooldownSeconds(cooldownDuration);
       const interval = setInterval(() => {
         setCooldownSeconds(prev => {
           if (prev <= 1) {
             clearInterval(interval);
+            localStorage.removeItem('emailVerificationCooldown');
             return 0;
           }
           return prev - 1;
@@ -197,20 +247,26 @@ export default function RegisterPage() {
       
       // If rate limited, extract cooldown time from error message
       if (err.response?.status === 429) {
-        const match = errorMessage.match(/(\d+)\s+second/);
-        if (match) {
-          const seconds = parseInt(match[1]);
-          setCooldownSeconds(seconds);
-          const interval = setInterval(() => {
-            setCooldownSeconds(prev => {
-              if (prev <= 1) {
-                clearInterval(interval);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        }
+        const retryAfter = err.response?.data?.retryAfter || 60;
+        const expiresAt = Date.now() + (retryAfter * 1000);
+        
+        // Store in localStorage
+        localStorage.setItem('emailVerificationCooldown', JSON.stringify({
+          email: formData.gmail,
+          expiresAt
+        }));
+        
+        setCooldownSeconds(retryAfter);
+        const interval = setInterval(() => {
+          setCooldownSeconds(prev => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              localStorage.removeItem('emailVerificationCooldown');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       }
     } finally {
       setIsSendingCode(false);
