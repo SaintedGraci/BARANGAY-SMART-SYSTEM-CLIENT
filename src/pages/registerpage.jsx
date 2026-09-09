@@ -242,7 +242,7 @@ export default function RegisterPage() {
     }
   };
 
-  const validateStep2 = () => {
+  const validateStep2 = async () => {
     // Username Validation
     if (!formData.username || formData.username.trim().length === 0) {
       setError("❌ Username is required");
@@ -260,6 +260,27 @@ export default function RegisterPage() {
       setError("❌ Username can only contain letters, numbers, and underscores (no spaces or special characters)");
       return false;
     }
+    
+    // Check username availability with backend
+    setIsLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await axios.get(`${API_URL}/auth/check-username`, {
+        params: { username: formData.username }
+      });
+      
+      if (!response.data.available) {
+        setError("❌ Username already taken. Please choose a different username");
+        setIsLoading(false);
+        return false;
+      }
+    } catch (err) {
+      console.error('Username check error:', err);
+      setError("❌ Unable to verify username availability. Please try again");
+      setIsLoading(false);
+      return false;
+    }
+    setIsLoading(false);
     
     // Gmail Validation (optional but must be valid if provided)
     if (formData.gmail && formData.gmail.trim().length > 0) {
@@ -356,13 +377,13 @@ export default function RegisterPage() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     setError(""); // Clear any previous errors
     
     if (currentStep === 1 && validateStep1()) {
       setReviewStep(1);
       setShowReviewModal(true);
-    } else if (currentStep === 2 && validateStep2()) {
+    } else if (currentStep === 2 && await validateStep2()) {
       setReviewStep(2);
       setShowReviewModal(true);
     } else if (currentStep === 3 && validateStep3()) {
