@@ -37,65 +37,45 @@ export default function RegisterPage() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const turnstileRef = useRef(null);
   
-  // Check localStorage for existing cooldown on mount and when email changes
+  // Check localStorage for existing cooldown on mount
   useEffect(() => {
-    const checkCooldown = () => {
-      const cooldownData = localStorage.getItem('emailVerificationCooldown');
-      if (cooldownData) {
-        try {
-          const { email, expiresAt } = JSON.parse(cooldownData);
-          const now = Date.now();
-          
-          // Check if cooldown is for current email (or any email if gmail is empty yet)
-          if (now < expiresAt && (!formData.gmail || email === formData.gmail)) {
-            // Cooldown still active
-            const remainingSeconds = Math.ceil((expiresAt - now) / 1000);
-            setCooldownSeconds(remainingSeconds);
-            
-            // Start countdown
-            const countdownInterval = setInterval(() => {
-              setCooldownSeconds(prev => {
-                if (prev <= 1) {
-                  clearInterval(countdownInterval);
-                  localStorage.removeItem('emailVerificationCooldown');
-                  return 0;
-                }
-                return prev - 1;
-              });
-            }, 1000);
-            
-            // Cleanup on unmount
-            return countdownInterval;
-          } else if (now >= expiresAt) {
-            // Cooldown expired, clean up
-            localStorage.removeItem('emailVerificationCooldown');
-            setCooldownSeconds(0);
-          } else if (formData.gmail && email !== formData.gmail) {
-            // Different email, clear countdown for this user
-            setCooldownSeconds(0);
-          }
-        } catch (e) {
-          // Invalid data, clean up
-          localStorage.removeItem('emailVerificationCooldown');
-          setCooldownSeconds(0);
-        }
-      } else {
-        // No cooldown data, ensure counter is 0
-        setCooldownSeconds(0);
-      }
+    const cooldownData = localStorage.getItem('emailVerificationCooldown');
+    if (!cooldownData) {
+      return;
+    }
+
+    try {
+      const { expiresAt } = JSON.parse(cooldownData);
+      const now = Date.now();
       
-      return null;
-    };
-    
-    const intervalId = checkCooldown();
-    
-    // Cleanup function
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
+      if (now < expiresAt) {
+        // Cooldown still active
+        const remainingSeconds = Math.ceil((expiresAt - now) / 1000);
+        setCooldownSeconds(remainingSeconds);
+        
+        // Start countdown
+        const countdownInterval = setInterval(() => {
+          setCooldownSeconds(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+              localStorage.removeItem('emailVerificationCooldown');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        // Cleanup on unmount
+        return () => clearInterval(countdownInterval);
+      } else {
+        // Cooldown expired, clean up
+        localStorage.removeItem('emailVerificationCooldown');
       }
-    };
-  }, [formData.gmail]); // Re-check when email changes
+    } catch (e) {
+      // Invalid data, clean up
+      localStorage.removeItem('emailVerificationCooldown');
+    }
+  }, []); // Only run on mount
   
   const [formData, setFormData] = useState({
     firstName: "",
