@@ -37,7 +37,7 @@ export default function RegisterPage() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const turnstileRef = useRef(null);
   
-  // Check localStorage for existing cooldown on mount
+  // Check localStorage for existing cooldown on mount and when email changes
   useEffect(() => {
     const checkCooldown = () => {
       const cooldownData = localStorage.getItem('emailVerificationCooldown');
@@ -46,7 +46,8 @@ export default function RegisterPage() {
           const { email, expiresAt } = JSON.parse(cooldownData);
           const now = Date.now();
           
-          if (now < expiresAt) {
+          // Check if cooldown is for current email (or any email if gmail is empty yet)
+          if (now < expiresAt && (!formData.gmail || email === formData.gmail)) {
             // Cooldown still active
             const remainingSeconds = Math.ceil((expiresAt - now) / 1000);
             setCooldownSeconds(remainingSeconds);
@@ -64,19 +65,27 @@ export default function RegisterPage() {
             }, 1000);
             
             return () => clearInterval(interval);
-          } else {
+          } else if (now >= expiresAt) {
             // Cooldown expired, clean up
             localStorage.removeItem('emailVerificationCooldown');
+            setCooldownSeconds(0);
+          } else if (formData.gmail && email !== formData.gmail) {
+            // Different email, clear countdown for this user
+            setCooldownSeconds(0);
           }
         } catch (e) {
           // Invalid data, clean up
           localStorage.removeItem('emailVerificationCooldown');
+          setCooldownSeconds(0);
         }
+      } else {
+        // No cooldown data, ensure counter is 0
+        setCooldownSeconds(0);
       }
     };
     
     checkCooldown();
-  }, []);
+  }, [formData.gmail]); // Re-check when email changes
   
   const [formData, setFormData] = useState({
     firstName: "",
