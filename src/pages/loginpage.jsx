@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Lock, User, ArrowRight, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import bakilidLogo from "../assets/bakilidlogo.png";
@@ -139,7 +139,12 @@ export default function LoginPage() {
                   <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-600">
                     Password
                   </label>
-                  <span className="text-xs text-neutral-400">Forgot? Contact Barangay Office</span>
+                  <Link 
+                    to="/forgot-account" 
+                    className="text-xs text-neutral-600 hover:text-neutral-950 font-medium transition-colors"
+                  >
+                    Forgot Account?
+                  </Link>
                 </div>
                 <div className="relative">
                   <input

@@ -6,6 +6,8 @@ import { LandingPage } from './pages/landingpage';
 import LoginPage from './pages/loginpage';
 import AdminLogin from './pages/adminlogin';
 import RegisterPage from './pages/registerpage';
+import ForgotAccountPage from './pages/ForgotAccountPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import TermsOfService from './pages/termsofservice';
 import PrivacyPolicy from './pages/privacypolicy';
 import Dashboard from './pages/dashboard';
@@ -23,6 +25,8 @@ const App: React.FC = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-account" element={<ForgotAccountPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/dashboard" element={
