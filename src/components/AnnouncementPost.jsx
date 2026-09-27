@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Edit3, Trash2, Pin, Archive, MoreHorizontal,
-  ThumbsUp, MessageSquare, X, Send, Globe, Clock,
+  ThumbsUp, X, Globe, Clock,
   AlertTriangle, Info, Star, Calendar, Megaphone
 } from 'lucide-react';
 import OptimizedImage from './ui/OptimizedImage';
@@ -118,13 +118,9 @@ export default function AnnouncementPost({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [isHelpful, setIsHelpful] = useState(false);
   const [helpfulCount, setHelpfulCount] = useState(0);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
   const [loadingReaction, setLoadingReaction] = useState(false);
-  const [loadingComment, setLoadingComment] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
 
   const isAdmin = ['admin', 'captain', 'secretary'].includes(userRole);
@@ -153,24 +149,7 @@ export default function AnnouncementPost({
     }
   }, [announcement?.id, announcement?.isHelpful, announcement?.helpfulCount]);
 
-  useEffect(() => {
-    if (announcement?.id) fetchComments();
-  }, [announcement?.id]);
-
-  useEffect(() => {
-    if (showComments && announcement?.id) fetchComments();
-  }, [showComments, announcement?.id]);
-
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const fetchComments = async () => {
-    try {
-      const res = await announcementsAPI.getComments(announcement.id);
-      setComments(res.data.data.comments);
-    } catch (err) {
-      console.error('Fetch comments error:', err);
-    }
-  };
-
   const handleReaction = async () => {
     if (loadingReaction) return;
     setLoadingReaction(true);
@@ -195,30 +174,6 @@ export default function AnnouncementPost({
       setHelpfulCount(prevCount);
     } finally {
       setLoadingReaction(false);
-    }
-  };
-
-  const handleAddComment = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim() || loadingComment) return;
-    setLoadingComment(true);
-    try {
-      await announcementsAPI.addComment(announcement.id, newComment.trim());
-      setNewComment('');
-      await fetchComments();
-    } catch (err) {
-      console.error('Add comment error:', err);
-    } finally {
-      setLoadingComment(false);
-    }
-  };
-
-  const handleDeleteComment = async (commentId) => {
-    try {
-      await announcementsAPI.deleteComment(announcement.id, commentId);
-      await fetchComments();
-    } catch (err) {
-      console.error('Delete comment error:', err);
     }
   };
 
@@ -414,7 +369,7 @@ export default function AnnouncementPost({
           </div>
         )}
 
-        {/* ── Reaction + comment tally bar ── */}
+        {/* ── Reaction tally bar ── */}
         <div className="flex items-center justify-between px-4 sm:px-5 pt-3 pb-1 text-sm text-slate-500">
           <div className="flex items-center gap-1.5">
             {helpfulCount > 0 && (
@@ -426,21 +381,14 @@ export default function AnnouncementPost({
               </>
             )}
           </div>
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="text-slate-500 hover:text-slate-800 hover:underline transition-colors text-xs font-medium"
-          >
-            {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
-          </button>
         </div>
 
         {/* ── Divider ── */}
         <div className="mx-4 sm:mx-5 border-t border-slate-100" />
 
-        {/* ── Action buttons ── */}
-        <div className="flex items-center px-2 sm:px-3 py-1">
-          {/* Helpful */}
-          <div className="relative flex-1">
+        {/* ── Like button ── */}
+        <div className="flex items-center justify-center px-2 sm:px-3 py-1">
+          <div className="relative w-full max-w-xs">
             <HelpfulBubble show={showBubble} />
             <button
               onClick={handleReaction}
@@ -461,133 +409,10 @@ export default function AnnouncementPost({
                     : 'text-slate-500'
                 )}
               />
-              <span>Helpful</span>
+              <span>{isHelpful ? 'Liked' : 'Like'}</span>
             </button>
           </div>
-
-          {/* Comment */}
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-semibold',
-              'transition-all duration-200',
-              showComments
-                ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-            )}
-          >
-            <MessageSquare
-              className={cn(
-                'w-4 h-4 sm:w-5 sm:h-5 transition-colors',
-                showComments ? 'text-blue-600' : 'text-slate-500'
-              )}
-            />
-            <span>Comment</span>
-          </button>
         </div>
-
-        {/* ── Comment section ── */}
-        {showComments && (
-          <div className="border-t border-slate-100 bg-slate-50/60 rounded-b-2xl px-4 sm:px-5 py-4 space-y-4">
-            {/* Input row */}
-            <form onSubmit={handleAddComment} className="flex items-center gap-2.5">
-              <Avatar className="w-8 h-8 shrink-0">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs font-bold">
-                  {userRole ? userRole.charAt(0).toUpperCase() : 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-emerald-400 focus-within:border-transparent transition-all">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write a comment…"
-                  className="flex-1 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
-                />
-                <button
-                  type="submit"
-                  disabled={!newComment.trim() || loadingComment}
-                  className={cn(
-                    'p-1.5 rounded-full transition-all duration-200',
-                    newComment.trim()
-                      ? 'text-emerald-600 hover:bg-emerald-50'
-                      : 'text-slate-300 cursor-not-allowed'
-                  )}
-                  aria-label="Post comment"
-                >
-                  {loadingComment ? (
-                    <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* Comments list */}
-            <div className="space-y-3">
-              {comments.length === 0 ? (
-                <div className="py-6 text-center">
-                  <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs text-slate-400">No comments yet. Be the first!</p>
-                </div>
-              ) : (
-                comments.map((comment) => {
-                  const userName =
-                    comment.user?.fullName || comment.user?.username || 'Unknown';
-                  const initials = userName
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .substring(0, 2)
-                    .toUpperCase();
-
-                  return (
-                    <div key={comment.id} className="flex items-start gap-2.5 group/comment">
-                      <Avatar className="w-8 h-8 shrink-0">
-                        <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xs font-bold">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="bg-white border border-slate-200/80 rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate">
-                                {userName}
-                              </p>
-                              <p className="text-sm text-slate-700 mt-0.5 break-words leading-relaxed">
-                                {comment.comment}
-                              </p>
-                            </div>
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleDeleteComment(comment.id)}
-                                className="flex-shrink-0 p-1 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover/comment:opacity-100"
-                                aria-label="Delete comment"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-1 px-1">
-                          {new Date(comment.createdAt).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
       </article>
 
       {/* ── Lightbox ── */}
