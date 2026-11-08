@@ -174,6 +174,12 @@ export const requestsAPI = {
   createRequest: (data) => api.post('/requests', data), // Alias for create
   update: (id, data) => api.put(`/requests/${id}`, data),
   delete: (id) => api.delete(`/requests/${id}`),
+  
+  // Archive system
+  markAsClaimed: (id) => api.post(`/requests/${id}/claim`),
+  archive: (id) => api.post(`/requests/${id}/archive`),
+  getArchived: (params) => api.get('/requests/archives', { params }),
+  unarchive: (id) => api.post(`/requests/${id}/unarchive`),
 };
 
 // Alias for convenience
