@@ -127,9 +127,9 @@ export default function ArchivesTab() {
       if (dateTo) params.dateTo = dateTo;
 
       const response = await requestsAPI.getArchived(params);
-      const data = response.data.data;
+      const data = response.data;
 
-      setArchives(data.archives || []);
+      setArchives(data.data || []);
       setTotalPages(data.pagination?.totalPages || 1);
       setTotalRecords(data.pagination?.total || 0);
       setCurrentPage(data.pagination?.page || 1);
