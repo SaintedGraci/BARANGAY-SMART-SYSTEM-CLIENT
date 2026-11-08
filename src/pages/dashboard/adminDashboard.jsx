@@ -41,6 +41,7 @@ import { useSocket } from '../../context/SocketContext';
 import { requestsAPI, residentsAPI, announcementsAPI, logsAPI, complaintsAPI } from '../../services/api';
 import AnalyticsTab from './AnalyticsTab';
 import UserManagementTab from './UserManagementTab';
+import ArchivesTab from './ArchivesTab';
 import AdminLayout from '../../layouts/AdminLayout';
 import bakilidLogo from '../../assets/bakilidlogo.png';
 import AnnouncementFeed from '../../components/AnnouncementFeed';
@@ -90,6 +91,7 @@ const TAB_DESCRIPTIONS = {
   residents: 'Manage registered residents and account access.',
   verifications: 'Approve or reject new resident registrations with supporting documents.',
   announcements: 'Publish, edit, archive, or remove announcements for residents.',
+  archives: 'Search and view claimed documents archive with restore capability.',
   logs: 'Inspect system logs, errors, warnings, and security events.',
   reports: 'View service analytics and administrative reporting summaries.',
 };
@@ -282,10 +284,10 @@ export default function AdminDashboard() {
   
   // RBAC: Define role permissions
   const rolePermissions = {
-    captain: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'announcements'],
-    secretary: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements'],
-    staff: ['overview', 'residents', 'requests', 'complaints', 'verifications'],
-    admin: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'logs', 'users']
+    captain: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'announcements', 'archives'],
+    secretary: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'archives'],
+    staff: ['overview', 'residents', 'requests', 'complaints', 'verifications', 'archives'],
+    admin: ['overview', 'analytics', 'residents', 'requests', 'complaints', 'verifications', 'announcements', 'archives', 'logs', 'users']
   };
   
   // Get user's allowed tabs based on role
@@ -596,7 +598,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteComplaint = async (complaintId) => {
-    if (!confirm('Are you sure you want to delete this complaint? This action cannot be undone.')) {
+    if (!confirm('Are you  sure you want to delete this complaint? This action cannot be undone.')) {
       return;
     }
 
@@ -942,6 +944,38 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleMarkAsClaimed = async (requestId) => {
+    if (!window.confirm('Mark this document as claimed?\n\nThis action records that the resident has picked up their document.')) {
+      return;
+    }
+
+    try {
+      await requestsAPI.markAsClaimed(requestId);
+      alert('✓ Document marked as claimed successfully!');
+      fetchData();
+      setSelectedRequest(null);
+    } catch (error) {
+      console.error('Error marking as claimed:', error);
+      alert(error.response?.data?.message || 'Failed to mark as claimed');
+    }
+  };
+
+  const handleArchiveRequest = async (requestId) => {
+    if (!window.confirm('Archive this claimed document?\n\nArchived documents can be searched and restored later.')) {
+      return;
+    }
+
+    try {
+      await requestsAPI.archive(requestId);
+      alert('✓ Document archived successfully!');
+      fetchData();
+      setSelectedRequest(null);
+    } catch (error) {
+      console.error('Error archiving request:', error);
+      alert(error.response?.data?.message || 'Failed to archive. Document must be claimed first.');
+    }
+  };
+
   const filteredRequests = Array.isArray(requests)
     ? requests.filter((request) => {
         const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
@@ -1005,6 +1039,7 @@ export default function AdminDashboard() {
       badge: Array.isArray(pendingVerifications) ? pendingVerifications.length : 0,
     },
     { id: 'announcements', name: 'Announcements', icon: Megaphone },
+    { id: 'archives', name: 'Archives', icon: FileCheck },
     { id: 'logs', name: 'System Logs', icon: Activity },
     { id: 'users', name: 'User Management', icon: Users },
   ];
@@ -2067,6 +2102,8 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {activeTab === 'archives' && <ArchivesTab />}
+
           {activeTab === 'logs' && (
             <div className="space-y-6">
               {logStats && (
@@ -2999,6 +3036,53 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   )}
+                </div>
+              </section>
+            )}
+
+            {selectedRequest.status === 'Claimed' && (
+              <section>
+                <h4 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">📦 Archive Management</h4>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-600 text-white flex-shrink-0">
+                      <FileCheck className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-900">Document Claimed</p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        This document has been picked up by the resident. You can now archive it for record-keeping.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleArchiveRequest(selectedRequest.id)}
+                    className="w-full rounded-xl bg-slate-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700"
+                  >
+                    📦 Archive Document
+                  </button>
+                  <p className="mt-2 text-center text-xs text-slate-500">
+                    Archived documents can be searched and restored from the Archives tab
+                  </p>
+                </div>
+              </section>
+            )}
+
+            {selectedRequest.status !== 'Claimed' && selectedRequest.status !== 'Ready for Release' && (
+              <section>
+                <h4 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">📦 Claim & Archive</h4>
+                <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="mt-0.5 h-5 w-5 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900">Not Ready for Archiving</p>
+                      <p className="mt-1 text-xs text-amber-700">
+                        {selectedRequest.status === 'Claimed' 
+                          ? 'This document is ready to be archived.' 
+                          : 'Change status to "Ready for Release", notify the resident, then mark as "Claimed" before archiving.'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </section>
             )}
